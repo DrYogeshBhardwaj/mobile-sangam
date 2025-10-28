@@ -1,4 +1,4 @@
-/* Mobile Sangam — app.js (Countries Auto-Load) */
+/* Mobile Sangam — app.js (Countries Auto-Load, Preload Relations) */
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
   const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
@@ -90,15 +90,16 @@ const MS = (()=>{
   };
   const restart=()=>{ setStage(0); ['#nameA','#nameB','#mobileA','#mobileB'].forEach(i=>{const e=qs(i); if(e) e.value='';}); qs('#reportContainer')&&(qs('#reportContainer').innerHTML=''); };
 
-  document.addEventListener('DOMContentLoaded',()=>{
+  document.addEventListener('DOMContentLoaded',async()=>{
+    // PRELOAD both: countries + language UI so relations appear BEFORE Start
+    await loadCountriesIndex();
+    await loadAll();
     on(qs('#startBtn'),'click',start);
     on(qs('#generateBtn'),'click',generate);
     on(qs('#restartBtn'),'click',restart);
     on(qs('#countrySelect'),'change', async (e)=>{ S.iso2=e.target.value; await loadAll(); });
     on(qs('#relationSelect'),'change', async (e)=>{ S.relation=e.target.value; await loadAll(); });
     on(qs('#langSelect'),'change', async (e)=>{ S.lang=e.target.value; await loadAll(); });
-    // preload minimal to render countries quickly
-    loadCountriesIndex();
   });
   return { state:S };
 })();
