@@ -8,20 +8,59 @@
     },
     "buttons": {
       "start": "शुरू करें",
-      "restart": "दोबारा शुरू",
-      "generate": "रिपोर्ट बनाएँ"
+      "restart": "पुनः आरंभ",
+      "generate": "रिपोर्ट बनाएं",
+      "showBig": "बड़ा परिणाम दिखाएँ",
+      "downloadPdf": "PDF डाउनलोड करें"
     },
     "warnings": {
-      "nameScript": "कृपया केवल A–Z अक्षरों में नाम लिखें।",
-      "mobileFormat": "इस देश के अनुसार मोबाइल संख्या अमान्य है।"
-    }
+      "nameScript": "वैध नाम लिखें (A–Z, space)",
+      "mobileFormat": "चयनित देश के अनुसार मोबाइल अमान्य",
+      "sameMobile": "दोनों मोबाइल एक समान नहीं हो सकते।"
+    },
+    "labels": {
+      "smallAdvice": "सार सलाह",
+      "bigAdvice": "विस्तृत सलाह",
+      "remedies": "उपाय",
+      "harmonyScore": "हार्मनी स्कोर",
+      "calc": "गणनाएँ",
+      "personA": "व्यक्ति A",
+      "personB": "व्यक्ति B",
+      "mobank": "मोबांक",
+      "yogank": "योगांक",
+      "naamank": "नामांक",
+      "sanyuktank": "संयुक्‍तांक",
+      "diffs": "अंतर",
+      "naamankDiff": "नामांक अंतर",
+      "yogankDiff": "योगांक अंतर",
+      "appendix": "तकनीकी परिशिष्ट"
+    },
+    "appendixTexts": [
+      "मोबांक (अंतिम non-zero अंक) प्राथमिक क्रियात्मक धारा दिखाता है; योगांक (अंकों का योग) समष्टिगत संकल्प दर्शाता है।",
+      "50 से कम हार्मनी स्कोर संवाद के असंतुलन का संकेत है; स्पष्टता और साझा दिनचर्या पर ध्यान दें।",
+      "संयुक्‍तांक = मोबांक और योगांक का संगलन (जोड़ नहीं)।",
+      "नामांक A–Z अक्षरों के 1–9 चक्र से निकलता है; स्पेस का मान शून्य माना जाता है।",
+      "विस्तृत, वैयक्तिक विश्लेषण हेतु 'Sinaank Diamond Report' देखें।"
+    ]
   },
   "relations": {
     "HUSBAND_WIFE": "पति–पत्नी",
-    "FRIENDS": "मित्र"
+    "FATHER_SON": "पिता–पुत्र",
+    "FATHER_DAUGHTER": "पिता–पुत्री",
+    "MOTHER_SON": "माँ–पुत्र",
+    "MOTHER_DAUGHTER": "माँ–पुत्री",
+    "BROTHER_SISTER": "भाई–बहन",
+    "FRIENDS": "मित्र",
+    "TEACHER_STUDENT": "गुरु–शिष्य",
+    "BOSS_EMPLOYEE": "अधिकारी–कर्मचारी",
+    "BUSINESS_PARTNERS": "व्यावसायिक साझेदार",
+    "COLLEAGUES": "सहकर्मी",
+    "NEIGHBOURS": "पड़ोसी",
+    "LOVERS": "प्रेमी–प्रेमिका",
+    "OTHERS": "अन्य"
   },
   "titles": {
     "mainTitle": "सिनांक डिजिटल मैच सिस्टम",
-    "subTitle": "मोबैंक • योगांक • संयुक्तांक"
+    "subTitle": "Mobank • Yogank • Sanyuktank"
   }
 }

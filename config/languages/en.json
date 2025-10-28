@@ -4,28 +4,55 @@
     "belowLang": "Please select relation",
     "headings": {
       "appTitle": "Mobile Sangam",
-      "footer": "Dr. Yogesh Bhardwaj \u2014 Astro Scientist \u2022 www.sinaank.com \u2022 Decode Your Destiny Digitally."
+      "footer": "Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally."
     },
     "buttons": {
       "start": "Start",
       "restart": "Restart",
-      "generate": "Generate Report"
+      "generate": "Generate Report",
+      "showBig": "Show Big Result",
+      "downloadPdf": "Download PDF"
     },
     "warnings": {
-      "nameScript": "Only A\u2013Z letters are allowed.",
-      "mobileFormat": "Invalid mobile number for selected country."
-    }
+      "nameScript": "Enter valid names (A–Z, spaces)",
+      "mobileFormat": "Invalid mobile number for selected country",
+      "sameMobile": "Both mobiles cannot be the same."
+    },
+    "labels": {
+      "smallAdvice": "Small Advice",
+      "bigAdvice": "Big Advice",
+      "remedies": "Remedies",
+      "harmonyScore": "Harmony Score",
+      "calc": "Calculations",
+      "personA": "Person A",
+      "personB": "Person B",
+      "mobank": "Mobank",
+      "yogank": "Yogank",
+      "naamank": "Naamank",
+      "sanyuktank": "Sanyuktank",
+      "diffs": "Differences",
+      "naamankDiff": "Naamank Difference",
+      "yogankDiff": "Yogank Difference",
+      "appendix": "Technical Appendix"
+    },
+    "appendixTexts": [
+      "Each Mobank (last non-zero digit) reflects a primary action-current; Yogank (digit sum) shows cumulative intent.",
+      "Harmony below 50 suggests communication imbalance; focus on clarity and shared routines.",
+      "Sanyuktank is the concatenation of Mobank and Yogank (not arithmetic sum).",
+      "Naamank derives from A–Z letters mapped cyclically 1–9; spaces are neutral (0).",
+      "Detailed, personalized insights are available in the Sinaank Diamond Report."
+    ]
   },
   "relations": {
-    "HUSBAND_WIFE": "Husband\u2013Wife",
-    "FATHER_SON": "Father\u2013Son",
-    "FATHER_DAUGHTER": "Father\u2013Daughter",
-    "MOTHER_SON": "Mother\u2013Son",
-    "MOTHER_DAUGHTER": "Mother\u2013Daughter",
-    "BROTHER_SISTER": "Brother\u2013Sister",
+    "HUSBAND_WIFE": "Husband–Wife",
+    "FATHER_SON": "Father–Son",
+    "FATHER_DAUGHTER": "Father–Daughter",
+    "MOTHER_SON": "Mother–Son",
+    "MOTHER_DAUGHTER": "Mother–Daughter",
+    "BROTHER_SISTER": "Brother–Sister",
     "FRIENDS": "Friends",
-    "TEACHER_STUDENT": "Teacher\u2013Student",
-    "BOSS_EMPLOYEE": "Boss\u2013Employee",
+    "TEACHER_STUDENT": "Teacher–Student",
+    "BOSS_EMPLOYEE": "Boss–Employee",
     "BUSINESS_PARTNERS": "Business Partners",
     "COLLEAGUES": "Colleagues",
     "NEIGHBOURS": "Neighbours",
@@ -34,6 +61,6 @@
   },
   "titles": {
     "mainTitle": "Sinaank Digital Match System",
-    "subTitle": "Mobank \u2022 Yogank \u2022 Sanyuktank"
+    "subTitle": "Mobank • Yogank • Sanyuktank"
   }
 }

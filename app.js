@@ -1,11 +1,4 @@
-/* Mobile Sangam — app.js (Staged Advice + Score Cap + PDF Fix)
-   Changes:
-   - Names allow spaces (A–Z and space), auto Uppercase
-   - Harmony Score hard-capped to 88 (never reaches 89–100)
-   - PDF export: full report capture with pagebreak options
-   - Staged UI: First shows Ring + Small Advice only, with "Show Big Result" button;
-                clicking it reveals Big Advice + Remedies.
-*/
+/* Mobile Sangam — app.js (Adds Technical Appendix under Big Result) */
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
   const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
@@ -22,10 +15,18 @@ const MS = (()=>{
 
   const S={lang:'en', relation:'HUSBAND_WIFE', iso2:'IN', ui:null, country:null, advice:null, stage:0, cIndex:[], showFull:false};
   const LANG=()=>S.lang||'en';
+  const T=(path, fallback)=>{
+    try{
+      const ui=S.ui||{};
+      const parts=path.split('.'); let cur=ui;
+      for(const k of parts){ cur = cur && cur[k]; }
+      return (cur==null?fallback:cur);
+    }catch(_){ return fallback; }
+  };
   const FOOTER='Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally.';
+  const BTN=(k,f)=>T(`buttons.${k}`, f||k);
 
   const lockSelectors=(lock)=>{ ['langSelect','relationSelect','countrySelect'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!!lock; }); };
-
   const bindNameGuards=()=>{
     ['nameA','nameB'].forEach(id=>{
       const el=document.getElementById(id); if(!el) return;
@@ -58,8 +59,8 @@ const MS = (()=>{
   };
   const bindUI=()=>{
     const ui=S.ui||{};
-    qs('#uiAppTitle')&&(qs('#uiAppTitle').textContent=ui.headings?.appTitle||'Mobile Sangam');
-    qs('#uiSubtitle')&&(qs('#uiSubtitle').textContent=ui.titles?.subTitle||'Mobank • Yogank • Sanyuktank');
+    qs('#uiAppTitle')&&(qs('#uiAppTitle').textContent=T('headings.appTitle','Mobile Sangam'));
+    qs('#uiSubtitle')&&(qs('#uiSubtitle').textContent=(S.ui?.titles?.subTitle||'Mobank • Yogank • Sanyuktank'));
     const relSel=qs('#relationSelect');
     if(relSel && (ui.relations||ui.ui?.relations)){
       const relMap=ui.relations||ui.ui?.relations||{}; const cur=relSel.value||S.relation;
@@ -96,26 +97,78 @@ const MS = (()=>{
     const A={ naamank:naamank(nameA), yogank:yogank(mA), mobank:lastNZ(mA) };
     const B={ naamank:naamank(nameB), yogank:yogank(mB), mobank:lastNZ(mB) };
     let score=100; score-=Math.abs(A.naamank-B.naamank)*8; score-=Math.abs(A.yogank-B.yogank)*5;
-    score = clamp(Math.round(score),0,88); // hard cap at 88
-    return {A,B, sanyuktankA:sanyukt(A.mobank,A.yogank), sanyuktankB:sanyukt(B.mobank,B.yogank), harmonyScore:score};
+    score = clamp(Math.round(score),0,88); // cap 88
+    return {A,B, sanyuktankA:sanyukt(A.mobank,A.yogank), sanyuktankB:sanyukt(B.mobank,B.yogank), harmonyScore:score, naamankDiff:Math.abs(A.naamank-B.naamank), yogankDiff:Math.abs(A.yogank-B.yogank)};
   };
 
   const ring=(score)=>{ const pct=clamp(score,0,100); const ang=(pct/100)*180, r=64,cx=80,cy=80; const ex=cx+r*Math.cos(Math.PI-(ang*Math.PI/180)); const ey=cy-r*Math.sin(Math.PI-(ang*Math.PI/180)); return `<svg width="160" height="100" viewBox="0 0 160 100"><path d="M ${cx-r} ${cy} A ${r} ${r} 0 1 1 ${cx+r} ${cy}" fill="none" stroke-width="10" stroke="#eee"></path><path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${ex} ${ey}" fill="none" stroke-width="10" stroke="#3b82f6" stroke-linecap="round"></path><text x="80" y="70" text-anchor="middle" font-size="20" font-weight="700">${pct}</text></svg>`; };
 
+  const calcTable=(c)=>{
+    return `<div class="p-3 rounded border mt-3">
+      <div class="font-semibold mb-2">${T('labels.calc','Calculations')}</div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="rounded p-2 bg-gray-50">
+          <div class="font-semibold mb-1">${T('labels.personA','Person A')}</div>
+          <div>${T('labels.mobank','Mobank')}: <strong>${c.A.mobank}</strong></div>
+          <div>${T('labels.yogank','Yogank')}: <strong>${c.A.yogank}</strong></div>
+          <div>${T('labels.naamank','Naamank')}: <strong>${c.A.naamank}</strong></div>
+          <div>${T('labels.sanyuktank','Sanyuktank')}: <strong>${c.sanyuktankA}</strong></div>
+        </div>
+        <div class="rounded p-2 bg-gray-50">
+          <div class="font-semibold mb-1">${T('labels.personB','Person B')}</div>
+          <div>${T('labels.mobank','Mobank')}: <strong>${c.B.mobank}</strong></div>
+          <div>${T('labels.yogank','Yogank')}: <strong>${c.B.yogank}</strong></div>
+          <div>${T('labels.naamank','Naamank')}: <strong>${c.B.naamank}</strong></div>
+          <div>${T('labels.sanyuktank','Sanyuktank')}: <strong>${c.sanyuktankB}</strong></div>
+        </div>
+      </div>
+      <div class="mt-2">
+        <div class="font-semibold mb-1">${T('labels.diffs','Differences')}</div>
+        <div>${T('labels.naamankDiff','Naamank Difference')}: <strong>${c.naamankDiff}</strong></div>
+        <div>${T('labels.yogankDiff','Yogank Difference')}: <strong>${c.yogankDiff}</strong></div>
+      </div>
+    </div>`;
+  };
+
+  const appendixBlock=()=>{
+    const list = (S.ui && S.ui.appendixTexts) ? S.ui.appendixTexts : [];
+    if(!list.length) return '';
+    const items = list.map(x=>`<li class="mb-1">${x}</li>`).join('');
+    return `<div class="p-3 rounded border mt-3">
+      <div class="font-semibold mb-2">🪐 ${T('labels.appendix','Technical Appendix')}</div>
+      <ol class="list-decimal pl-5">${items}</ol>
+    </div>`;
+  };
+
   const render=(calc,adv,showFull)=>{
-    const ui=S.ui||{}; const el=qs('#reportContainer'); if(!el) return;
+    const el=qs('#reportContainer'); if(!el) return;
+    const header = `<div class="mb-3 pb-3 border-b flex items-center gap-3">
+      <img src="assets/logo.png" alt="Logo" class="w-10 h-10"/>
+      <div>
+        <div class="text-xl font-bold">${T('headings.appTitle','Mobile Sangam')}</div>
+        <div class="text-xs opacity-70">${S.ui?.titles?.subTitle || 'Mobank • Yogank • Sanyuktank'}</div>
+      </div>
+    </div>`;
+
     const bigBlock = showFull ? `
       <div class="p-3 rounded border mb-3">
-        <div class="font-semibold mb-2">${LANG()==='en'?'Big Advice':'विस्तृत सलाह'}</div>
+        <div class="font-semibold mb-2">${T('labels.bigAdvice','Big Advice')}</div>
         <div>${adv.big||''}</div>
       </div>
-      <div class="p-3 rounded border">
-        <div class="font-semibold mb-2">${LANG()==='en'?'Remedies':'उपाय'}</div>
+      <div class="p-3 rounded border mb-3">
+        <div class="font-semibold mb-2">${T('labels.remedies','Remedies')}</div>
         <div>${adv.remedy||''}</div>
+      </div>
+      ${calcTable(calc)}
+      ${appendixBlock()}
+      <div class="text-center mt-4">
+        <button id="exportBtn" class="bg-teal-500 hover:bg-teal-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
+          ${BTN('downloadPdf','Download PDF')}
+        </button>
       </div>`
       : `<div class="text-center mt-3">
           <button id="bigBtn" class="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
-            ${LANG()==='en'?'Show Big Result':'बड़ा परिणाम दिखाएँ'}
+            ${BTN('showBig','Show Big Result')}
           </button>
         </div>`;
 
@@ -126,38 +179,39 @@ const MS = (()=>{
       </a>
     </div>`;
 
+    const footer = `<div class="mt-6 pt-3 border-t text-center text-xs opacity-80">Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally.</div>`;
+
     el.innerHTML=`<div class="ms-report p-4 rounded-xl shadow bg-white text-black">
-      <div class="text-xl font-bold">${ui.headings?.appTitle||'Mobile Sangam'}</div>
-      <div class="text-sm opacity-70">${ui.titles?.subTitle||'Mobank • Yogank • Sanyuktank'}</div>
-      <div class="grid md:grid-cols-2 gap-4 my-4">
+      ${header}
+      <div class="grid md:grid-cols-2 gap-4 my-2">
         <div class="p-3 rounded border">
-          <div class="font-semibold mb-1">Person A</div>
-          <div>Mobank: <strong>${calc.A.mobank}</strong></div>
-          <div>Yogank: <strong>${calc.A.yogank}</strong></div>
-          <div>Naamank: <strong>${calc.A.naamank}</strong></div>
-          <div>Sanyuktank: <strong>${calc.sanyuktankA}</strong></div>
+          <div class="font-semibold mb-1">${T('labels.personA','Person A')}</div>
+          <div>${T('labels.mobank','Mobank')}: <strong>${calc.A.mobank}</strong></div>
+          <div>${T('labels.yogank','Yogank')}: <strong>${calc.A.yogank}</strong></div>
+          <div>${T('labels.naamank','Naamank')}: <strong>${calc.A.naamank}</strong></div>
+          <div>${T('labels.sanyuktank','Sanyuktank')}: <strong>${calc.sanyuktankA}</strong></div>
         </div>
         <div class="p-3 rounded border">
-          <div class="font-semibold mb-1">Person B</div>
-          <div>Mobank: <strong>${calc.B.mobank}</strong></div>
-          <div>Yogank: <strong>${calc.B.yogank}</strong></div>
-          <div>Naamank: <strong>${calc.B.naamank}</strong></div>
-          <div>Sanyuktank: <strong>${calc.sanyuktankB}</strong></div>
+          <div class="font-semibold mb-1">${T('labels.personB','Person B')}</div>
+          <div>${T('labels.mobank','Mobank')}: <strong>${calc.B.mobank}</strong></div>
+          <div>${T('labels.yogank','Yogank')}: <strong>${calc.B.yogank}</strong></div>
+          <div>${T('labels.naamank','Naamank')}: <strong>${calc.B.naamank}</strong></div>
+          <div>${T('labels.sanyuktank','Sanyuktank')}: <strong>${calc.sanyuktankB}</strong></div>
         </div>
       </div>
-      <div class="my-3 flex flex-col items-center">${ring(calc.harmonyScore)}<div class="text-center text-sm mt-1">Harmony Score</div></div>
+      <div class="my-3 flex flex-col items-center">${ring(calc.harmonyScore)}<div class="text-center text-sm mt-1">${T('labels.harmonyScore','Harmony Score')}</div></div>
       <div class="p-3 rounded border mb-3">
-        <div class="font-semibold mb-2">${LANG()==='en'?'Small Advice':'सार सलाह'}</div>
+        <div class="font-semibold mb-2">${T('labels.smallAdvice','Small Advice')}</div>
         <div>${adv.small||''}</div>
       </div>
       ${bigBlock}
       ${cta}
-      <div class="mt-6 text-center text-xs opacity-80">${FOOTER}</div>
+      ${footer}
     </div>`;
   };
 
   const exportPDF=async()=>{
-    const node = qs('.ms-report'); // capture exact report card
+    const node = qs('.ms-report');
     if(!node){ alert(LANG()==='en'?'Please generate the report first.':'पहले रिपोर्ट जनरेट करें।'); return; }
     const nA=(qs('#nameA')?.value||'A').toUpperCase().replace(/[^A-Z ]/g,'').trim().replace(/\s+/g,'_');
     const nB=(qs('#nameB')?.value||'B').toUpperCase().replace(/[^A-Z ]/g,'').trim().replace(/\s+/g,'_');
@@ -178,27 +232,26 @@ const MS = (()=>{
     const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
     const mA=digits(strip(qs('#mobileA')?.value||'', S.country?.mobile?.strip||[]));
     const mB=digits(strip(qs('#mobileB')?.value||'', S.country?.mobile?.strip||[]));
-    if(!nA.trim()||!nB.trim()) return warn(LANG()==='en'?'Enter valid names (A–Z, spaces)':'वैध नाम लिखें (A–Z, space)');
+    if(!nA.trim()||!nB.trim()) return warn(T('warnings.nameScript','Enter valid names (A–Z, spaces)'));
     const min=S.country?.mobile?.minLen||10, max=S.country?.mobile?.maxLen||10;
-    if(!(mA.length>=min && mA.length<=max) || !(mB.length>=min && mB.length<=max)) return warn(LANG()==='en'?'Invalid mobile number for selected country':'चयनित देश के अनुसार मोबाइल अमान्य');
-    if(mA===mB) return warn(LANG()==='en'?'Both mobiles cannot be the same.':'दोनों मोबाइल एक समान नहीं हो सकते।');
+    if(!(mA.length>=min && mA.length<=max) || !(mB.length>=min && mB.length<=max)) return warn(T('warnings.mobileFormat','Invalid mobile number for selected country'));
+    if(mA===mB) return warn(T('warnings.sameMobile','Both mobiles cannot be the same.'));
     warn(''); const calc=calcPair({nameA:nA,nameB:nB,mA,mB}); S.showFull=false; render(calc,S.advice,S.showFull); setStage(2);
   };
   const restart=()=>{ setStage(0); lockSelectors(false); ['#nameA','#nameB','#mobileA','#mobileB'].forEach(i=>{const e=qs(i); if(e) e.value='';}); qs('#reportContainer')&&(qs('#reportContainer').innerHTML=''); warn(''); };
 
-  // Delegated click for "Show Big Result"
+  // Delegated click listeners
   document.addEventListener('click',(e)=>{
     if(e.target && e.target.id==='bigBtn'){
       S.showFull=true;
-      // Recompute current values and re-render with full blocks
       const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
       const mA=digits(qs('#mobileA')?.value||''), mB=digits(qs('#mobileB')?.value||'');
       const calc=calcPair({nameA:nA,nameB:nB,mA,mB});
       render(calc,S.advice,true);
+      const pdfBtn=document.getElementById('exportBtn'); if(pdfBtn){ pdfBtn.addEventListener('click', exportPDF); }
     }
   });
 
-  // Countries index
   const loadCountriesIndex=async()=>{
     try{ S.cIndex = await fetchJSON(`/config/countries/_index.json?_=${Date.now()}`); }
     catch(e){ S.cIndex=[{code:'IN',label:'India (+91)'},{code:'US',label:'USA (+1)'}]; }
@@ -206,7 +259,6 @@ const MS = (()=>{
   };
 
   document.addEventListener('DOMContentLoaded',async()=>{
-    // Preload
     try{ S.cIndex = await fetchJSON(`/config/countries/_index.json?_=${Date.now()}`);}catch(e){ S.cIndex=[{code:'IN',label:'India (+91)'},{code:'US',label:'USA (+1)'}]; }
     populateCountries();
     await loadAll();
@@ -214,7 +266,6 @@ const MS = (()=>{
     bindMobileGuards();
     on(qs('#startBtn'),'click',start);
     on(qs('#generateBtn'),'click',generate);
-    on(qs('#exportBtn'),'click',exportPDF);
     on(qs('#restartBtn'),'click',restart);
     on(qs('#countrySelect'),'change', async (e)=>{ S.iso2=e.target.value; await loadAll(); });
     on(qs('#relationSelect'),'change', async (e)=>{ S.relation=e.target.value; await loadAll(); });
