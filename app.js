@@ -1,4 +1,4 @@
-/* Mobile Sangam — Dual-Lang (Fixed PDF Fallback) */
+/* Mobile Sangam — Final (relative paths + preload PDF) */
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
   const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
@@ -76,13 +76,11 @@ const MS = (()=>{
     const iso2=document.getElementById('countrySelect')?.value||S.iso2;
     S.lang=lang; S.relation=relation; S.iso2=iso2;
     const bust=`?_=${Date.now()}`;
-    const ui=await fetchJSON(`/config/languages/${lang}.json${bust}`);
-    const country=await fetchJSON(`/config/countries/${S.iso2}.json${bust}`);
+    const ui=await fetchJSON(`config/languages/${lang}.json${bust}`);
+    const country=await fetchJSON(`config/countries/${S.iso2}.json${bust}`);
     let adv;
-    try{ adv=await fetchJSON(`/config/advice/${lang}/${relation}.json${bust}`); }
+    try{ adv=await fetchJSON(`config/advice/${lang}/${relation}.json${bust}`); }
     catch(_){ adv={ small:(S.lang==='en'?'Balanced outlook — keep communicating.':'सामान्य संतुलन — संवाद रखें।'), big:(S.lang==='en'?'Minor differences may arise; patience and clarity build harmony.':'कुछ बातों में मतभेद सम्भव हैं; धैर्य रखें।'), remedy:(S.lang==='en'?'Meditate or pray together once a week.':'सप्ताह में एक बार साथ प्रार्थना करें।') }; }
-    if (adv && !adv.small && adv.details && adv.details.summary) adv.small = adv.details.summary;
-    if (adv && !adv.big && adv.details && adv.details.sinaankInsight) adv.big = adv.details.sinaankInsight;
     S.ui = ui?.ui ? { ...ui.ui, titles: ui.titles, relations: ui.relations||ui.ui?.relations } : ui;
     S.country=country; S.advice=adv;
     bindUI(); syncMobileAttrs();
@@ -217,68 +215,28 @@ const MS = (()=>{
     </div>`;
   };
 
-  // ------- jsPDF loader (fixed fallback) + Hindi font hook -------
-  const ensureJsPDF = async()=>{
-    if (window.jspdf || window.jsPDF) return;
-    async function load(src){
-      await new Promise((resolve, reject)=>{
-        const s=document.createElement('script');
-        s.src=src; s.async=true;
-        s.onload=()=>resolve();
-        s.onerror=()=>reject(new Error('Failed: '+src));
-        document.head.appendChild(s);
-      });
-    }
-    // Try local
-    try{ await load('/lib/jspdf.umd.min.js'); }catch(e){ /* ignore */ }
-    // If local didn't attach window.jspdf, try CDN
-    if (!(window.jspdf || window.jsPDF)) {
-      await load('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
-    }
-    if (!(window.jspdf || window.jsPDF)) throw new Error('jsPDF unavailable after local+CDN attempts');
-  };
-  const ensureNotoFont = async()=>{
-    if (window.NotoDevaBase64) return true;
-    try{
-      await new Promise((resolve)=>{
-        const s=document.createElement('script');
-        s.src='fonts/noto-devanagari.js';
-        s.async=true; s.onload=()=>resolve(); s.onerror=()=>resolve();
-        document.head.appendChild(s);
-      });
-    }catch(_){}
-    return !!window.NotoDevaBase64;
-  };
-
   const exportPDF=async()=>{
     const node = qs('.ms-report');
     if(!node){ alert(S.lang==='hi'?'पहले रिपोर्ट जनरेट करें।':'Please generate the report first.'); return; }
-    try{ await ensureJsPDF(); }catch(e){ alert(e.message); return; }
     const { jsPDF } = window.jspdf || {};
     if(!jsPDF){ alert('PDF engine failed to load.'); return; }
-    const useFont = await ensureNotoFont();
+    try{
+      const mA=digits(qs('#mobileA')?.value||'');
+      const mB=digits(qs('#mobileB')?.value||'');
+      const MA = (mA && mA.length) ? (mA.replace(/0+$/,'').slice(-1)||'9') : '9';
+      const MB = (mB && mB.length) ? (mB.replace(/0+$/,'').slice(-1)||'9') : '9';
+      const fname=`SM${MA}-${MB}.pdf`;
 
-    const mA=digits(qs('#mobileA')?.value||'');
-    const mB=digits(qs('#mobileB')?.value||'');
-    const MA = (mA && mA.length) ? (mA.replace(/0+$/,'').slice(-1)||'9') : '9';
-    const MB = (mB && mB.length) ? (mB.replace(/0+$/,'').slice(-1)||'9') : '9';
-    const fname=`SM${MA}-${MB}.pdf`;
-
-    const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
-    if (useFont && window.NotoDevaBase64){
-      try{
-        doc.addFileToVFS("NotoSansDevanagari-Regular.ttf", window.NotoDevaBase64);
-        doc.addFont("NotoSansDevanagari-Regular.ttf", "NotoDeva", "normal");
-        doc.setFont("NotoDeva", "normal");
-      }catch(e){ console.warn('Font registration failed; proceeding default.', e); }
+      const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+      await doc.html(node, {
+        x: 10, y: 10, width: 190,
+        html2canvas: { scale: 1.6, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+        autoPaging: 'text',
+        callback: function (doc) { try{ doc.save(fname); }catch(e){ alert('Save failed'); } }
+      });
+    }catch(err){
+      console.error(err); alert('PDF export failed');
     }
-
-    await doc.html(node, {
-      x: 10, y: 10, width: 190,
-      html2canvas: { scale: 1.6, useCORS: true, logging: false, backgroundColor: '#ffffff' },
-      autoPaging: 'text',
-      callback: function (doc) { try{ doc.save(fname); }catch(e){ alert('Save failed'); } }
-    });
   };
 
   const start=async()=>{
@@ -325,13 +283,13 @@ const MS = (()=>{
   });
 
   const loadCountriesIndex=async()=>{
-    try{ S.cIndex = await fetchJSON(`/config/countries/_index.json?_=${Date.now()}`); }
+    try{ S.cIndex = await fetchJSON(`config/countries/_index.json?_=${Date.now()}`); }
     catch(e){ S.cIndex=[{code:'IN',label:'India (+91)'},{code:'US',label:'USA (+1)'}]; }
     populateCountries();
   };
 
   document.addEventListener('DOMContentLoaded',async()=>{
-    try{ S.cIndex = await fetchJSON(`/config/countries/_index.json?_=${Date.now()}`);}catch(e){ S.cIndex=[{code:'IN',label:'India (+91)'},{code:'US',label:'USA (+1)'}]; }
+    try{ S.cIndex = await fetchJSON(`config/countries/_index.json?_=${Date.now()}`);}catch(e){ S.cIndex=[{code:'IN',label:'India (+91)'},{code:'US',label:'USA (+1)'}]; }
     populateCountries();
     await loadAll();
     bindNameGuards();
