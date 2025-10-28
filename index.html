@@ -81,18 +81,6 @@
     Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally.
   </footer>
 
-  <!-- Preload jsPDF (relative) + CDN fallback, then app.js -->
-  <script src="lib/jspdf.umd.min.js"></script>
-  <script>
-    (function () {
-      function add(src){var s=document.createElement('script');s.src=src;s.async=true;document.head.appendChild(s);}
-      window.addEventListener('load', function () {
-        if (!(window.jspdf || window.jsPDF)) {
-          add('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
-        }
-      });
-    })();
-  </script>
   <script src="app.js"></script>
 </body>
 </html>
