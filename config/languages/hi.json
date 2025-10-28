@@ -1,0 +1,27 @@
+{
+  "ui": {
+    "languageTitle": "हिंदी",
+    "belowLang": "कृपया संबंध चुनें",
+    "headings": {
+      "appTitle": "मोबाइल संगम",
+      "footer": "Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally."
+    },
+    "buttons": {
+      "start": "शुरू करें",
+      "restart": "दोबारा शुरू",
+      "generate": "रिपोर्ट बनाएँ"
+    },
+    "warnings": {
+      "nameScript": "कृपया केवल A–Z अक्षरों में नाम लिखें।",
+      "mobileFormat": "इस देश के अनुसार मोबाइल संख्या अमान्य है।"
+    }
+  },
+  "relations": {
+    "HUSBAND_WIFE": "पति–पत्नी",
+    "FRIENDS": "मित्र"
+  },
+  "titles": {
+    "mainTitle": "सिनांक डिजिटल मैच सिस्टम",
+    "subTitle": "मोबैंक • योगांक • संयुक्तांक"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "country": "United States",
+  "iso2": "US",
+  "isd": "+1",
+  "mobile": {
+    "minLen": 10,
+    "maxLen": 10,
+    "strip": [
+      " ",
+      "-",
+      "(",
+      ")",
+      "+"
+    ]
+  },
+  "examples": [
+    "9876543210",
+    "2125557890"
+  ]
+}

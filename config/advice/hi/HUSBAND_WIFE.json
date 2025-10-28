@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "relation": "HUSBAND_WIFE",
+    "lang": "hi"
+  },
+  "maps": {
+    "RULES": [],
+    "SANYUKTANK_BUCKETS": {}
+  },
+  "details": {
+    "summary": "यह संबंध साझा मूल्यों और भावनात्मक समझ पर आधारित है।",
+    "strengths": [
+      "विश्वास",
+      "संवाद"
+    ],
+    "challenges": [
+      "अति-चिन्ता"
+    ],
+    "sinaankInsight": "Mobank-Yogank का संतुलन सामंजस्य बढ़ाता है।"
+  }
+}

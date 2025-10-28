@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "relation": "HUSBAND_WIFE",
+    "lang": "en"
+  },
+  "maps": {
+    "RULES": [],
+    "SANYUKTANK_BUCKETS": {}
+  },
+  "details": {
+    "summary": "This relationship is based on shared values and emotional understanding.",
+    "strengths": [
+      "Trust",
+      "Communication"
+    ],
+    "challenges": [
+      "Overthinking"
+    ],
+    "sinaankInsight": "Aligned Mobank-Yogank deepens harmony."
+  }
+}
