@@ -1,17 +1,17 @@
 {
   "meta": {
-    "relation": "HUSBAND_WIFE",
+    "relation": "FATHER_SON",
     "lang": "en"
   },
   "maps": {
     "RULES": [],
     "SANYUKTANK_BUCKETS": {}
   },
-  "small": "Balanced outlook for Husband\u2013Wife. Keep communication clear and gentle.",
-  "big": "For Husband\u2013Wife, harmony improves when time, respect, and shared routines are maintained. Be practical with decisions and patient with emotions.",
+  "small": "Balanced outlook for Father\u2013Son. Keep communication clear and gentle.",
+  "big": "For Father\u2013Son, harmony improves when time, respect, and shared routines are maintained. Be practical with decisions and patient with emotions.",
   "remedy": "Once a week, spend 20 minutes together in quiet reflection or prayer. Keep a shared note of gratitude.",
   "details": {
-    "summary": "Husband\u2013Wife thrives on trust, clarity, and consistent effort.",
+    "summary": "Father\u2013Son thrives on trust, clarity, and consistent effort.",
     "strengths": [
       "Trust",
       "Communication",

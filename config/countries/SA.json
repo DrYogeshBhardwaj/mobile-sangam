@@ -1,10 +1,10 @@
 {
-  "country": "United States",
-  "iso2": "US",
-  "isd": "+1",
+  "country": "Saudi Arabia",
+  "iso2": "SA",
+  "isd": "+966",
   "mobile": {
-    "minLen": 10,
-    "maxLen": 10,
+    "minLen": 9,
+    "maxLen": 9,
     "strip": [
       " ",
       "-",
@@ -14,7 +14,7 @@
     ]
   },
   "examples": [
-    "2125557890"
+    "512345678"
   ],
   "notes": "Lengths are national significant numbers (without ISD). Trailing zeros ignored for Mobank rule."
 }

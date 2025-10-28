@@ -4,7 +4,7 @@
     "belowLang": "Please select relation",
     "headings": {
       "appTitle": "Mobile Sangam",
-      "footer": "Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally."
+      "footer": "Dr. Yogesh Bhardwaj \u2014 Astro Scientist \u2022 www.sinaank.com \u2022 Decode Your Destiny Digitally."
     },
     "buttons": {
       "start": "Start",
@@ -12,16 +12,28 @@
       "generate": "Generate Report"
     },
     "warnings": {
-      "nameScript": "Only A–Z letters are allowed.",
+      "nameScript": "Only A\u2013Z letters are allowed.",
       "mobileFormat": "Invalid mobile number for selected country."
     }
   },
   "relations": {
-    "HUSBAND_WIFE": "Husband–Wife",
-    "FRIENDS": "Friends"
+    "HUSBAND_WIFE": "Husband\u2013Wife",
+    "FATHER_SON": "Father\u2013Son",
+    "FATHER_DAUGHTER": "Father\u2013Daughter",
+    "MOTHER_SON": "Mother\u2013Son",
+    "MOTHER_DAUGHTER": "Mother\u2013Daughter",
+    "BROTHER_SISTER": "Brother\u2013Sister",
+    "FRIENDS": "Friends",
+    "TEACHER_STUDENT": "Teacher\u2013Student",
+    "BOSS_EMPLOYEE": "Boss\u2013Employee",
+    "BUSINESS_PARTNERS": "Business Partners",
+    "COLLEAGUES": "Colleagues",
+    "NEIGHBOURS": "Neighbours",
+    "LOVERS": "Lovers",
+    "OTHERS": "Others"
   },
   "titles": {
     "mainTitle": "Sinaank Digital Match System",
-    "subTitle": "Mobank • Yogank • Sanyuktank"
+    "subTitle": "Mobank \u2022 Yogank \u2022 Sanyuktank"
   }
 }

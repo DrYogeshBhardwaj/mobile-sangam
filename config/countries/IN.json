@@ -9,10 +9,12 @@
       " ",
       "-",
       "(",
-      ")"
+      ")",
+      "+"
     ]
   },
   "examples": [
     "9876543210"
-  ]
+  ],
+  "notes": "Lengths are national significant numbers (without ISD). Trailing zeros ignored for Mobank rule."
 }
