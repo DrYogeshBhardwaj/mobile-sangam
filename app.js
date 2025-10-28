@@ -1,8 +1,9 @@
-/* Mobile Sangam — app.js (Vector PDF via jsPDF + Simple Filename)
-   - Export now uses jsPDF v2 html() for selectable text (no "No text could be extracted")
-   - Filename simplified to SM<MA>-<MB>.pdf
+/* Mobile Sangam — app.js (Vector PDF + Hindi Font Hook + Fix PDF click)
+   - jsPDF vector PDF export (text selectable)
+   - Simple filename: SM<MA>-<MB>.pdf
    - PDF button only after "Show Big Result"
-   - Session lock after Generate; score cap 88; derivation blocks kept
+   - Session lock after Generate; score cap 88; derivations shown
+   - Hindi font hook: loads fonts/noto-devanagari.js if present; embeds into jsPDF if available
 */
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
@@ -170,12 +171,12 @@ const MS = (()=>{
       ${calcTable(calc)}
       <div class="text-center mt-4">
         <button id="exportBtn" class="bg-teal-500 hover:bg-teal-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
-          ${ (S.ui&&S.ui.buttons&&S.ui.buttons.downloadPdf) || 'Download PDF'}
+          ${(S.ui&&S.ui.buttons&&S.ui.buttons.downloadPdf) || 'Download PDF'}
         </button>
       </div>`
       : `<div class="text-center mt-3">
           <button id="bigBtn" class="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
-            ${ (S.ui&&S.ui.buttons&&S.ui.buttons.showBig) || 'Show Big Result'}
+            ${(S.ui&&S.ui.buttons&&S.ui.buttons.showBig) || 'Show Big Result'}
           </button>
         </div>`;
 
@@ -206,7 +207,7 @@ const MS = (()=>{
     </div>`;
   };
 
-  // ------- jsPDF loader (dynamic) -------
+  // ------- jsPDF loader (dynamic) and Hindi font hook -------
   const ensureJsPDF = async()=>{
     if (window.jspdf || window.jsPDF) return;
     await new Promise((resolve, reject)=>{
@@ -218,13 +219,27 @@ const MS = (()=>{
       document.head.appendChild(s);
     });
   };
+  const ensureNotoFont = async()=>{
+    if (window.NotoDevaBase64) return true;
+    // try to load local font stub
+    try{
+      await new Promise((resolve,reject)=>{
+        const s=document.createElement('script');
+        s.src='fonts/noto-devanagari.js';
+        s.async=true; s.onload=()=>resolve(); s.onerror=()=>resolve(); // non-blocking
+        document.head.appendChild(s);
+      });
+    }catch(_){}
+    return !!window.NotoDevaBase64;
+  };
 
   const exportPDF=async()=>{
     const node = qs('.ms-report');
     if(!node){ alert(S.lang==='en'?'Please generate the report first.':'पहले रिपोर्ट जनरेट करें।'); return; }
     await ensureJsPDF();
     const { jsPDF } = window.jspdf || {};
-    if(!jsPDF){ alert('jsPDF load failed'); return; }
+    if(!jsPDF){ alert('PDF engine failed to load.'); return; }
+    const useFont = await ensureNotoFont();
 
     const mA=digits(qs('#mobileA')?.value||'');
     const mB=digits(qs('#mobileB')?.value||'');
@@ -233,11 +248,20 @@ const MS = (()=>{
     const fname=`SM${MA}-${MB}.pdf`;
 
     const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+
+    if (useFont && window.NotoDevaBase64){
+      try{
+        doc.addFileToVFS("NotoSansDevanagari-Regular.ttf", window.NotoDevaBase64);
+        doc.addFont("NotoSansDevanagari-Regular.ttf", "NotoDeva", "normal");
+        doc.setFont("NotoDeva", "normal");
+      }catch(e){ console.warn('Font registration failed, proceeding with default.', e); }
+    }
+
     await doc.html(node, {
       x: 10, y: 10, width: 190,
       html2canvas: { scale: 1.6, useCORS: true, logging: false, backgroundColor: '#ffffff' },
       autoPaging: 'text',
-      callback: function (doc) { doc.save(fname); }
+      callback: function (doc) { try{ doc.save(fname); }catch(e){ alert('Save failed'); } }
     });
   };
 
@@ -245,6 +269,7 @@ const MS = (()=>{
     await loadCountriesIndex(); await loadAll(); S.showFull=false;
     document.getElementById('inputSection')?.classList.remove('hidden');
     lockSelectors(true);
+    // Hide any legacy export button (if present in index)
     const legacy = document.getElementById('exportBtn'); if(legacy){ legacy.style.display='none'; legacy.id='exportBtnOld'; }
   };
 
@@ -270,14 +295,18 @@ const MS = (()=>{
     warn('');
   };
 
+  // Robust delegated listeners (works even after re-render)
   document.addEventListener('click',(e)=>{
-    if(e.target && e.target.id==='bigBtn'){
+    const id = (e.target && e.target.id) || (e.target.closest && e.target.closest('button') && e.target.closest('button').id);
+    if(id==='bigBtn'){
       S.showFull=true;
       const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
       const mA=digits(qs('#mobileA')?.value||''), mB=digits(qs('#mobileB')?.value||'');
       const calc=calcPair({nameA:nA,nameB:nB,mA,mB});
       render(calc,S.advice,true);
-      const pdfBtn=document.getElementById('exportBtn'); if(pdfBtn){ pdfBtn.addEventListener('click', exportPDF); }
+    }
+    if(id==='exportBtn'){
+      exportPDF();
     }
   });
 
