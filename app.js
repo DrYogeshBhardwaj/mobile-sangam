@@ -1,4 +1,10 @@
-/* Mobile Sangam — app.js (Header/Footer Final for PDF) */
+/* Mobile Sangam — app.js (Session Lock + SM Filename + Classic Section + PDF fix)
+   Updates:
+   - After "Generate Report": disable name/mobile inputs and Generate button (session closed). Restart re-enables.
+   - PDF button remains only under Big Result.
+   - PDF export reliability improved; filename "SM<mA>-<mB>_...".
+   - Big Result includes a "Classic" block inspired by Sinaank Sahayog+ family report layout.
+*/
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
   const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
@@ -15,7 +21,16 @@ const MS = (()=>{
 
   const S={lang:'en', relation:'HUSBAND_WIFE', iso2:'IN', ui:null, country:null, advice:null, stage:0, cIndex:[], showFull:false};
   const LANG=()=>S.lang||'en';
-  const BTN=(k,f)=>((S.ui&&S.ui.buttons&&S.ui.buttons[k])||f||k);
+  const T=(path, fallback)=>{
+    try{
+      const ui=S.ui||{};
+      const parts=path.split('.'); let cur=ui;
+      for(const k of parts){ cur = cur && cur[k]; }
+      return (cur==null?fallback:cur);
+    }catch(_){ return fallback; }
+  };
+  const FOOTER='Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally.';
+  const BTN=(k,f)=>T(`buttons.${k}`, f||k);
 
   const lockSelectors=(lock)=>{ ['langSelect','relationSelect','countrySelect'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!!lock; }); };
   const lockInputs=(lock)=>{ ['nameA','nameB','mobileA','mobileB','generateBtn'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; if(id==='generateBtn'){ el.disabled=!!lock; el.classList.toggle('opacity-60', !!lock); el.classList.toggle('pointer-events-none', !!lock);} else { el.readOnly=!!lock; el.disabled=!!lock; el.classList.toggle('bg-gray-200', !!lock);} }); };
@@ -24,8 +39,8 @@ const MS = (()=>{
     ['nameA','nameB'].forEach(id=>{
       const el=document.getElementById(id); if(!el) return;
       el.setAttribute('autocomplete','off');
-      el.addEventListener('input',()=>{ el.value = (el.value||'').replace(/[^A-Za-z ]/g,'').toUpperCase(); });
-      el.addEventListener('paste',(e)=>{ e.preventDefault(); el.value = (e.clipboardData.getData('text')||'').replace(/[^A-Za-z ]/g,'').toUpperCase(); });
+      el.addEventListener('input',()=>{ el.value = onlyAZSpace(el.value); });
+      el.addEventListener('paste',(e)=>{ e.preventDefault(); el.value = onlyAZSpace(e.clipboardData.getData('text')||''); });
     });
   };
   const bindMobileGuards=()=>{
@@ -33,10 +48,10 @@ const MS = (()=>{
       const el=document.getElementById(id); if(!el) return;
       el.setAttribute('inputmode','numeric'); el.setAttribute('autocomplete','off');
       el.addEventListener('input',()=>{
-        el.value = (el.value||'').replace(/\D+/g,'');
+        el.value = digits(el.value||'');
         const max=S.country?.mobile?.maxLen || 15; if(el.value.length>max) el.value = el.value.slice(0,max);
       });
-      el.addEventListener('paste',(e)=>{ e.preventDefault(); const t=(e.clipboardData.getData('text')||'').replace(/\D+/g,''); const max=S.country?.mobile?.maxLen||15; el.value=t.slice(0,max); });
+      el.addEventListener('paste',(e)=>{ e.preventDefault(); const t=digits(e.clipboardData.getData('text')||''); const max=S.country?.mobile?.maxLen||15; el.value=t.slice(0,max); });
     });
   };
   const syncMobileAttrs=()=>{
@@ -52,7 +67,7 @@ const MS = (()=>{
   };
   const bindUI=()=>{
     const ui=S.ui||{};
-    qs('#uiAppTitle')&&(qs('#uiAppTitle').textContent=(ui.headings?.appTitle||'Mobile Sangam'));
+    qs('#uiAppTitle')&&(qs('#uiAppTitle').textContent=T('headings.appTitle','Mobile Sangam'));
     qs('#uiSubtitle')&&(qs('#uiSubtitle').textContent=(S.ui?.titles?.subTitle||'Mobank • Yogank • Sanyuktank'));
     const relSel=qs('#relationSelect');
     if(relSel && (ui.relations||ui.ui?.relations)){
@@ -123,26 +138,42 @@ const MS = (()=>{
     </div>`;
   };
 
-  const headerPDF=()=>{
-    return `<div class="mb-3 pb-3 border-b flex items-center gap-3">
-      <img src="assets/logo.png" alt="Logo" class="w-12 h-12"/>
-      <div>
-        <div class="text-xl font-bold">SINAANK SAHAYOG+ DIGITAL REPORT</div>
-        <div class="text-xs opacity-70">Mobank • Yogank • Sanyuktank • Naamank</div>
+  const classicBlock=(calc)=>{
+    // Simple classic styled text block (can be localized later)
+    const relMap = S.ui?.relations || {};
+    const relText = relMap[S.relation] || S.relation;
+    const nameA=(qs('#nameA')?.value||'A').trim();
+    const nameB=(qs('#nameB')?.value||'B').trim();
+    const mobA=(qs('#mobileA')?.value||'').trim();
+    const mobB=(qs('#mobileB')?.value||'').trim();
+    return `<div class="p-3 rounded border mt-3">
+      <div class="font-semibold mb-2">SINAANK SAHAYOG+ FAMILY DIGITAL REPORT</div>
+      <div class="text-sm opacity-80">(${relText}: ${nameA} & ${nameB})</div>
+      <div class="mt-2 text-xs">🪔 Decode Your Destiny Digitally • Mobank • Yogank • Sanyuktank • Naamank • www.sinaank.com</div>
+      <hr class="my-3 border-dashed"/>
+      <div class="text-sm"><strong>1) Individual Digital Profile</strong></div>
+      <div class="mt-1">
+        <div class="mb-2"><strong>${nameA}</strong> (${mobA})<br/>
+          - Mobank: ${calc.A.mobank} &nbsp; - Yogank: ${calc.A.yogank} &nbsp; - Sanyuktank: ${calc.sanyuktankA} &nbsp; - Naamank: ${calc.A.naamank}
+        </div>
+        <div class="mb-2"><strong>${nameB}</strong> (${mobB})<br/>
+          - Mobank: ${calc.B.mobank} &nbsp; - Yogank: ${calc.B.yogank} &nbsp; - Sanyuktank: ${calc.sanyuktankB} &nbsp; - Naamank: ${calc.B.naamank}
+        </div>
       </div>
-    </div>`;
-  };
-
-  const footerPDF=()=>{
-    return `<div class="mt-6 pt-3 border-t text-center text-xs opacity-90 leading-5">
-      🪔 Decode Your Destiny Digitally<br/>
-      www.sinaank.com<br/>
-      Dr. Yogesh Bhardwaj — Astro Scientist
+      <div class="mt-2 text-sm"><strong>2) Digital Harmony Summary</strong></div>
+      <div class="text-xs">Overall Harmony Score (capped): <strong>${calc.harmonyScore}%</strong></div>
     </div>`;
   };
 
   const render=(calc,adv,showFull)=>{
     const el=qs('#reportContainer'); if(!el) return;
+    const header = `<div class="mb-3 pb-3 border-b flex items-center gap-3">
+      <img src="assets/logo.png" alt="Logo" class="w-10 h-10"/>
+      <div>
+        <div class="text-xl font-bold">${S.ui?.headings?.appTitle || 'Mobile Sangam'}</div>
+        <div class="text-xs opacity-70">${S.ui?.titles?.subTitle || 'Mobank • Yogank • Sanyuktank'}</div>
+      </div>
+    </div>`;
 
     const bigBlock = showFull ? `
       <div class="p-3 rounded border mb-3">
@@ -154,6 +185,7 @@ const MS = (()=>{
         <div>${adv.remedy||''}</div>
       </div>
       ${calcTable(calc)}
+      ${classicBlock(calc)}
       <div class="text-center mt-4">
         <button id="exportBtn" class="bg-teal-500 hover:bg-teal-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
           ${BTN('downloadPdf','Download PDF')}
@@ -165,8 +197,17 @@ const MS = (()=>{
           </button>
         </div>`;
 
+    const cta = `<div class="mt-4 text-center">
+      <a href="https://sinaank.com/dist/#/purchase?report=diamond" target="_blank"
+         class="inline-block bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-4 py-2 rounded-lg shadow">
+         Get Full Diamond Report (₹551)
+      </a>
+    </div>`;
+
+    const footer = `<div class="mt-6 pt-3 border-t text-center text-xs opacity-80">${FOOTER}</div>`;
+
     el.innerHTML=`<div class="ms-report p-4 rounded-xl shadow bg-white text-black">
-      ${headerPDF()}
+      ${header}
       <div class="grid md:grid-cols-2 gap-4 my-2">
         <div class="p-3 rounded border">
           <div class="font-semibold mb-1">${LANG()==='en'?'Person A':'व्यक्ति A'}</div>
@@ -189,7 +230,8 @@ const MS = (()=>{
         <div>${adv.small||''}</div>
       </div>
       ${bigBlock}
-      ${footerPDF()}
+      ${cta}
+      ${footer}
     </div>`;
   };
 
@@ -198,11 +240,15 @@ const MS = (()=>{
     if(!node){ alert(LANG()==='en'?'Please generate the report first.':'पहले रिपोर्ट जनरेट करें।'); return; }
     const nA=(qs('#nameA')?.value||'A').toUpperCase().replace(/[^A-Z ]/g,'').trim().replace(/\s+/g,'_');
     const nB=(qs('#nameB')?.value||'B').toUpperCase().replace(/[^A-Z ]/g,'').trim().replace(/\s+/g,'_');
-    const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
-    const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
-    const MA = (mA && mA.length) ? (mA.replace(/0+$/,'').slice(-1)||'9') : '9';
-    const MB = (mB && mB.length) ? (mB.replace(/0+$/,'').slice(-1)||'9') : '9';
-    const fname=`SM${MA}-${MB}_${S.relation||'REL'}_${nA}_x_${nB}_${S.iso2||'XX'}.pdf`;
+    const calcTxt = (()=>{
+      // build SM<MA>-<MB>
+      const mA = digits(qs('#mobileA')?.value||'');
+      const mB = digits(qs('#mobileB')?.value||'');
+      const MA = (mA && mA.length) ? (mA.replace(/0+$/,'').slice(-1)||'9') : '9';
+      const MB = (mB && mB.length) ? (mB.replace(/0+$/,'').slice(-1)||'9') : '9';
+      return `SM${MA}-${MB}`;
+    })();
+    const fname=`${calcTxt}_${S.relation||'REL'}_${nA}_x_${nB}_${S.iso2||'XX'}.pdf`;
     const opt={
       margin:[8,8,10,8],
       filename:fname,
@@ -217,23 +263,24 @@ const MS = (()=>{
   const start=async()=>{ await loadCountriesIndex(); await loadAll(); S.showFull=false; setStage(1); lockSelectors(true); };
   const generate=()=>{
     const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
-    const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
-    const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
+    const mA=digits(strip(qs('#mobileA')?.value||'', S.country?.mobile?.strip||[]));
+    const mB=digits(strip(qs('#mobileB')?.value||'', S.country?.mobile?.strip||[]));
     if(!nA.trim()||!nB.trim()) return warn(LANG()==='en'?'Enter valid names (A–Z, spaces)':'वैध नाम लिखें (A–Z, space)');
     const min=S.country?.mobile?.minLen||10, max=S.country?.mobile?.maxLen||10;
     if(!(mA.length>=min && mA.length<=max) || !(mB.length>=min && mB.length<=max)) return warn(LANG()==='en'?'Invalid mobile number for selected country':'चयनित देश के अनुसार मोबाइल अमान्य');
     if(mA===mB) return warn(LANG()==='en'?'Both mobiles cannot be the same.':'दोनों मोबाइल एक समान नहीं हो सकते।');
     warn(''); const calc=calcPair({nameA:nA,nameB:nB,mA,mB}); S.showFull=false; render(calc,S.advice,S.showFull); setStage(2);
-    lockInputs(true); // session close after generate
+    // Session close: lock text inputs & generate
+    lockInputs(true);
   };
   const restart=()=>{ setStage(0); lockSelectors(false); lockInputs(false); ['#nameA','#nameB','#mobileA','#mobileB'].forEach(i=>{const e=qs(i); if(e) e.value='';}); qs('#reportContainer')&&(qs('#reportContainer').innerHTML=''); warn(''); };
 
+  // Delegated click listeners
   document.addEventListener('click',(e)=>{
     if(e.target && e.target.id==='bigBtn'){
       S.showFull=true;
       const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
-      const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
-      const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
+      const mA=digits(qs('#mobileA')?.value||''), mB=digits(qs('#mobileB')?.value||'');
       const calc=calcPair({nameA:nA,nameB:nB,mA,mB});
       render(calc,S.advice,true);
       const pdfBtn=document.getElementById('exportBtn'); if(pdfBtn){ pdfBtn.addEventListener('click', exportPDF); }
