@@ -1,43 +1,24 @@
-/* Mobile Sangam — app.js (Hide legacy PDF btn + Derivation Blocks)
-   - Hides any old #exportBtn in index (so it never shows at start)
-   - PDF button appears ONLY after "Show Big Result"
-   - Adds derivations for Naamank and Yogank (letter/digit sums) per person
-   - Keeps: session lock, score cap 88, SM filename, staged flow
+/* Mobile Sangam — app.js (Vector PDF via jsPDF + Simple Filename)
+   - Export now uses jsPDF v2 html() for selectable text (no "No text could be extracted")
+   - Filename simplified to SM<MA>-<MB>.pdf
+   - PDF button only after "Show Big Result"
+   - Session lock after Generate; score cap 88; derivation blocks kept
 */
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
   const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
   const fetchJSON=async(p)=>{const r=await fetch(p,{cache:'no-store'}); if(!r.ok) throw new Error('Load fail '+p); return r.json();};
-  const strip=(s,cs=[])=>cs.reduce((t,c)=>t.split(c).join(''), s||'');
   const digits=(s)=>(s||'').replace(/\D+/g,'');
   const onlyAZSpace=(s)=>(s||'').replace(/[^A-Za-z ]/g,'').toUpperCase();
   const clamp=(v,l,h)=>Math.max(l,Math.min(h,v));
   const reduce19=(n)=>{n=Math.abs(Number(n)||0);while(n>9)n=String(n).split('').reduce((a,d)=>a+Number(d),0);return n===0?9:n;};
-  const naamankVal=(name)=>{const c=onlyAZSpace(name); const mv=(ch)=> ch===' ' ? 0 : (((ch.charCodeAt(0)-64-1)%9)+1); return reduce19(c.split('').reduce((a,ch)=>a+mv(ch),0));};
+  const mapLetterVal=(ch)=> ch===' ' ? 0 : (((ch.charCodeAt(0)-64-1)%9)+1);
+  const naamankVal=(name)=>{const c=onlyAZSpace(name); return reduce19(c.split('').reduce((a,ch)=>a+mapLetterVal(ch),0));};
   const yogankVal=(d)=>reduce19((d||'').split('').reduce((a,x)=>a+Number(x),0));
   const lastNZ=(d)=>{for(let i=(d||'').length-1;i>=0;i--){if(d[i]!=='0')return Number(d[i]);}return 9;};
   const sanyukt=(m,y)=>Number(`${m}${y}`);
 
-  // Derivation helpers
-  const mapLetterVal=(ch)=> ch===' ' ? 0 : (((ch.charCodeAt(0)-64-1)%9)+1);
-  const naamankDerivation=(name)=>{
-    const clean=onlyAZSpace(name);
-    const letters = clean.replace(/\s+/g,'').split('');
-    const nums = letters.map(mapLetterVal);
-    const sum = nums.reduce((a,b)=>a+b,0);
-    const reduced = reduce19(sum);
-    return { letters, nums, sum, reduced };
-  };
-  const yogankDerivation=(d)=>{
-    const digs = (d||'').replace(/\D+/g,'').split('').map(x=>Number(x));
-    const sum = digs.reduce((a,b)=>a+b,0);
-    const reduced = reduce19(sum);
-    return { digs, sum, reduced };
-  };
-
   const S={lang:'en', relation:'HUSBAND_WIFE', iso2:'IN', ui:null, country:null, advice:null, stage:0, cIndex:[], showFull:false};
-  const LANG=()=>S.lang||'en';
-  const BTN=(k,f)=>((S.ui&&S.ui.buttons&&S.ui.buttons[k])||f||k);
 
   const lockSelectors=(lock)=>{ ['langSelect','relationSelect','countrySelect'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!!lock; }); };
   const lockInputs=(lock)=>{ ['nameA','nameB','mobileA','mobileB','generateBtn'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; if(id==='generateBtn'){ el.disabled=!!lock; el.classList.toggle('opacity-60', !!lock); el.classList.toggle('pointer-events-none', !!lock);} else { el.readOnly=!!lock; el.disabled=!!lock; el.classList.toggle('bg-gray-200', !!lock);} }); };
@@ -61,45 +42,47 @@ const MS = (()=>{
       el.addEventListener('paste',(e)=>{ e.preventDefault(); const t=digits(e.clipboardData.getData('text')||''); const max=S.country?.mobile?.maxLen||15; el.value=t.slice(0,max); });
     });
   };
+
   const syncMobileAttrs=()=>{
     const min=S.country?.mobile?.minLen||10, max=S.country?.mobile?.maxLen||10;
     ['mobileA','mobileB'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; el.setAttribute('maxlength', String(max)); el.setAttribute('placeholder', `Enter ${min}-${max} digits`); });
   };
 
   const populateCountries=()=>{
-    const sel=qs('#countrySelect'); if(!sel) return;
+    const sel=document.getElementById('countrySelect'); if(!sel) return;
     const keep = sel.value || S.iso2; sel.innerHTML='';
     (S.cIndex||[]).forEach(it=>{ const o=document.createElement('option'); o.value=it.code; o.textContent=it.label; sel.appendChild(o); });
     sel.value = (S.cIndex.find(x=>x.code===keep)?.code) || (S.cIndex[0]?.code||'IN'); S.iso2 = sel.value;
   };
+
   const bindUI=()=>{
     const ui=S.ui||{};
-    qs('#uiAppTitle')&&(qs('#uiAppTitle').textContent=(ui.headings?.appTitle||'Mobile Sangam'));
-    qs('#uiSubtitle')&&(qs('#uiSubtitle').textContent=(S.ui?.titles?.subTitle||'Mobank • Yogank • Sanyuktank'));
-    const relSel=qs('#relationSelect');
+    const relSel=document.getElementById('relationSelect');
     if(relSel && (ui.relations||ui.ui?.relations)){
       const relMap=ui.relations||ui.ui?.relations||{}; const cur=relSel.value||S.relation;
       relSel.innerHTML='';
-      const ph=document.createElement('option'); ph.value=''; ph.textContent=LANG()==='en'?'-- Select Relation --':'— संबंध चुनें —'; relSel.appendChild(ph);
+      const ph=document.createElement('option'); ph.value=''; ph.textContent=S.lang==='en'?'-- Select Relation --':'— संबंध चुनें —'; relSel.appendChild(ph);
       Object.keys(relMap).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=relMap[k]; relSel.appendChild(o); });
       relSel.value=cur;
     }
-    qs('#isdBadgeA')&&(qs('#isdBadgeA').textContent=S.country?.isd||'');
-    qs('#isdBadgeB')&&(qs('#isdBadgeB').textContent=S.country?.isd||'');
+    const a=document.getElementById('isdBadgeA'), b=document.getElementById('isdBadgeB');
+    if(a) a.textContent = S.country?.isd||'';
+    if(b) b.textContent = S.country?.isd||'';
   };
-  const setStage=(n)=>{ S.stage=n; const sec=document.getElementById('inputSection'); if(sec) sec.classList.toggle('hidden', n===0); };
 
   const warn=(t)=>{ const w=qs('#warnings'); if(w){ w.textContent=t||''; w.classList.toggle('hidden', !t);} };
 
   const loadAll=async()=>{
-    const lang=qs('#langSelect')?.value||S.lang; const relation=qs('#relationSelect')?.value||S.relation; const iso2=qs('#countrySelect')?.value||S.iso2;
+    const lang=document.getElementById('langSelect')?.value||S.lang;
+    const relation=document.getElementById('relationSelect')?.value||S.relation;
+    const iso2=document.getElementById('countrySelect')?.value||S.iso2;
     S.lang=lang; S.relation=relation; S.iso2=iso2;
     const bust=`?_=${Date.now()}`;
     const ui=await fetchJSON(`/config/languages/${lang}.json${bust}`);
     const country=await fetchJSON(`/config/countries/${S.iso2}.json${bust}`);
     let adv;
     try{ adv=await fetchJSON(`/config/advice/${lang}/${relation}.json${bust}`); }
-    catch(_){ adv={ small:(LANG()==='en'?'Balanced outlook — keep communicating.':'सामान्य संतुलन — संवाद रखें।'), big:(LANG()==='en'?'Minor differences may arise; patience and clarity build harmony.':'कुछ बातों में मतभेद सम्भव हैं; धैर्य रखें।'), remedy:(LANG()==='en'?'Meditate or pray together once a week.':'सप्ताह में एक बार साथ प्रार्थना करें।') }; }
+    catch(_){ adv={ small:(S.lang==='en'?'Balanced outlook — keep communicating.':'सामान्य संतुलन — संवाद रखें।'), big:(S.lang==='en'?'Minor differences may arise; patience and clarity build harmony.':'कुछ बातों में मतभेद सम्भव हैं; धैर्य रखें।'), remedy:(S.lang==='en'?'Meditate or pray together once a week.':'सप्ताह में एक बार साथ प्रार्थना करें।') }; }
     if (adv && !adv.small && adv.details && adv.details.summary) adv.small = adv.details.summary;
     if (adv && !adv.big && adv.details && adv.details.sinaankInsight) adv.big = adv.details.sinaankInsight;
     S.ui = ui?.ui ? { ...ui.ui, titles: ui.titles, relations: ui.relations||ui.ui?.relations } : ui;
@@ -112,27 +95,29 @@ const MS = (()=>{
     const A={ naamank:naamankVal(nameA), yogank:yogankVal(mA), mobank:lastNZ(mA) };
     const B={ naamank:naamankVal(nameB), yogank:yogankVal(mB), mobank:lastNZ(mB) };
     let score=100; score-=Math.abs(A.naamank-B.naamank)*8; score-=Math.abs(A.yogank-B.yogank)*5;
-    score = clamp(Math.round(score),0,88); // cap 88
+    score = clamp(Math.round(score),0,88);
     return {A,B, sanyuktankA:sanyukt(A.mobank,A.yogank), sanyuktankB:sanyukt(B.mobank,B.yogank), harmonyScore:score, naamankDiff:Math.abs(A.naamank-B.naamank), yogankDiff:Math.abs(A.yogank-B.yogank)};
   };
 
   const ring=(score)=>{ const pct=clamp(score,0,100); const ang=(pct/100)*180, r=64,cx=80,cy=80; const ex=cx+r*Math.cos(Math.PI-(ang*Math.PI/180)); const ey=cy-r*Math.sin(Math.PI-(ang*Math.PI/180)); return `<svg width="160" height="100" viewBox="0 0 160 100"><path d="M ${cx-r} ${cy} A ${r} ${r} 0 1 1 ${cx+r} ${cy}" fill="none" stroke-width="10" stroke="#eee"></path><path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${ex} ${ey}" fill="none" stroke-width="10" stroke="#3b82f6" stroke-linecap="round"></path><text x="80" y="70" text-anchor="middle" font-size="20" font-weight="700">${pct}</text></svg>`; };
 
-  const eq=(arr, sep='+')=>arr.join(` ${sep} `);
   const derivationBlock=(label, name, mobile)=>{
-    const nDer = naamankDerivation(name);
-    const yDer = yogankDerivation(mobile);
-    const letters = eq(nDer.letters, '+');
-    const nums    = eq(nDer.nums, '+');
-    const digs    = eq(yDer.digs, '+');
+    const letters = onlyAZSpace(name).replace(/\s+/g,'').split('');
+    const nums    = letters.map(mapLetterVal);
+    const sum     = nums.reduce((a,b)=>a+b,0);
+    const nred    = reduce19(sum);
+    const digs    = digits(mobile).split('').map(x=>Number(x));
+    const ysum    = digs.reduce((a,b)=>a+b,0);
+    const yred    = reduce19(ysum);
+    const j = (arr,sep='+')=>arr.join(` ${sep} `);
     return `<div class="rounded p-3 bg-gray-50">
       <div class="font-semibold mb-1">${label}</div>
       <div class="text-sm"><em>${name}</em></div>
-      <div class="text-xs mt-1">• ${letters}</div>
-      <div class="text-xs">= ${nums} = <strong>${nDer.sum}</strong> ⇒ <strong>${nDer.reduced}</strong></div>
+      <div class="text-xs mt-1">• ${j(letters,'+')}</div>
+      <div class="text-xs">= ${j(nums,'+')} = <strong>${sum}</strong> ⇒ <strong>${nred}</strong></div>
       <div class="text-xs mt-2"><em>${mobile}</em></div>
-      <div class="text-xs">• ${digs}</div>
-      <div class="text-xs">= <strong>${yDer.sum}</strong> ⇒ <strong>${yDer.reduced}</strong></div>
+      <div class="text-xs">• ${j(digs,'+')}</div>
+      <div class="text-xs">= <strong>${ysum}</strong> ⇒ <strong>${yred}</strong></div>
     </div>`;
   };
 
@@ -173,48 +158,47 @@ const MS = (()=>{
 
   const render=(calc,adv,showFull)=>{
     const el=qs('#reportContainer'); if(!el) return;
-
     const bigBlock = showFull ? `
       <div class="p-3 rounded border mb-3">
-        <div class="font-semibold mb-2">${LANG()==='en'?'Big Advice':'विस्तृत सलाह'}</div>
+        <div class="font-semibold mb-2">${S.lang==='en'?'Big Advice':'विस्तृत सलाह'}</div>
         <div>${adv.big||''}</div>
       </div>
       <div class="p-3 rounded border mb-3">
-        <div class="font-semibold mb-2">${LANG()==='en'?'Remedies':'उपाय'}</div>
+        <div class="font-semibold mb-2">${S.lang==='en'?'Remedies':'उपाय'}</div>
         <div>${adv.remedy||''}</div>
       </div>
       ${calcTable(calc)}
       <div class="text-center mt-4">
         <button id="exportBtn" class="bg-teal-500 hover:bg-teal-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
-          ${BTN('downloadPdf','Download PDF')}
+          ${ (S.ui&&S.ui.buttons&&S.ui.buttons.downloadPdf) || 'Download PDF'}
         </button>
       </div>`
       : `<div class="text-center mt-3">
           <button id="bigBtn" class="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
-            ${BTN('showBig','Show Big Result')}
+            ${ (S.ui&&S.ui.buttons&&S.ui.buttons.showBig) || 'Show Big Result'}
           </button>
         </div>`;
 
     el.innerHTML=`<div class="ms-report p-4 rounded-xl shadow bg-white text-black">
       <div class="grid md:grid-cols-2 gap-4 my-2">
         <div class="p-3 rounded border">
-          <div class="font-semibold mb-1">${LANG()==='en'?'Person A':'व्यक्ति A'}</div>
+          <div class="font-semibold mb-1">${S.lang==='en'?'Person A':'व्यक्ति A'}</div>
           <div>Mobank: <strong>${calc.A.mobank}</strong></div>
           <div>Yogank: <strong>${calc.A.yogank}</strong></div>
           <div>Naamank: <strong>${calc.A.naamank}</strong></div>
           <div>Sanyuktank: <strong>${calc.sanyuktankA}</strong></div>
         </div>
         <div class="p-3 rounded border">
-          <div class="font-semibold mb-1">${LANG()==='en'?'Person B':'व्यक्ति B'}</div>
+          <div class="font-semibold mb-1">${S.lang==='en'?'Person B':'व्यक्ति B'}</div>
           <div>Mobank: <strong>${calc.B.mobank}</strong></div>
           <div>Yogank: <strong>${calc.B.yogank}</strong></div>
           <div>Naamank: <strong>${calc.B.naamank}</strong></div>
           <div>Sanyuktank: <strong>${calc.sanyuktankB}</strong></div>
         </div>
       </div>
-      <div class="my-3 flex flex-col items-center">${ring(calc.harmonyScore)}<div class="text-center text-sm mt-1">${LANG()==='en'?'Harmony Score':'हार्मनी स्कोर'}</div></div>
+      <div class="my-3 flex flex-col items-center">${ring(calc.harmonyScore)}<div class="text-center text-sm mt-1">${S.lang==='en'?'Harmony Score':'हार्मनी स्कोर'}</div></div>
       <div class="p-3 rounded border mb-3">
-        <div class="font-semibold mb-2">${LANG()==='en'?'Small Advice':'सार सलाह'}</div>
+        <div class="font-semibold mb-2">${S.lang==='en'?'Small Advice':'सार सलाह'}</div>
         <div>${adv.small||''}</div>
       </div>
       ${bigBlock}
@@ -222,50 +206,75 @@ const MS = (()=>{
     </div>`;
   };
 
-  const exportPDF=async()=>{
-    const node = qs('.ms-report');
-    if(!node){ alert(LANG()==='en'?'Please generate the report first.':'पहले रिपोर्ट जनरेट करें।'); return; }
-    const nA=(qs('#nameA')?.value||'A').toUpperCase().replace(/[^A-Z ]/g,'').trim().replace(/\s+/g,'_');
-    const nB=(qs('#nameB')?.value||'B').toUpperCase().replace(/[^A-Z ]/g,'').trim().replace(/\s+/g,'_');
-    const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
-    const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
-    const MA = (mA && mA.length) ? (mA.replace(/0+$/,'').slice(-1)||'9') : '9';
-    const MB = (mB && mB.length) ? (mB.replace(/0+$/,'').slice(-1)||'9') : '9';
-    const fname=`SM${MA}-${MB}_${S.relation||'REL'}_${nA}_x_${nB}_${S.iso2||'XX'}.pdf`;
-    const opt={
-      margin:[8,8,10,8],
-      filename:fname,
-      image:{type:'jpeg',quality:0.98},
-      html2canvas:{scale:2,useCORS:true,logging:false, windowWidth: 1024},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{ mode:['css','legacy'] }
-    };
-    try{ await window.html2pdf().set(opt).from(node).save(); }catch(e){ console.error(e); alert('PDF export failed.'); }
+  // ------- jsPDF loader (dynamic) -------
+  const ensureJsPDF = async()=>{
+    if (window.jspdf || window.jsPDF) return;
+    await new Promise((resolve, reject)=>{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+      s.async=true;
+      s.onload=()=>resolve();
+      s.onerror=()=>reject(new Error('Failed to load jsPDF'));
+      document.head.appendChild(s);
+    });
   };
 
-  const start=async()=>{ await loadCountriesIndex(); await loadAll(); S.showFull=false; setStage(1); lockSelectors(true);
-    // Hide any legacy export button placed in index.html accidentally
-    const legacy = qs('#exportBtn'); if(legacy){ legacy.style.display='none'; legacy.id='exportBtnOld'; }
+  const exportPDF=async()=>{
+    const node = qs('.ms-report');
+    if(!node){ alert(S.lang==='en'?'Please generate the report first.':'पहले रिपोर्ट जनरेट करें।'); return; }
+    await ensureJsPDF();
+    const { jsPDF } = window.jspdf || {};
+    if(!jsPDF){ alert('jsPDF load failed'); return; }
+
+    const mA=digits(qs('#mobileA')?.value||'');
+    const mB=digits(qs('#mobileB')?.value||'');
+    const MA = (mA && mA.length) ? (mA.replace(/0+$/,'').slice(-1)||'9') : '9';
+    const MB = (mB && mB.length) ? (mB.replace(/0+$/,'').slice(-1)||'9') : '9';
+    const fname=`SM${MA}-${MB}.pdf`;
+
+    const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+    await doc.html(node, {
+      x: 10, y: 10, width: 190,
+      html2canvas: { scale: 1.6, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+      autoPaging: 'text',
+      callback: function (doc) { doc.save(fname); }
+    });
   };
+
+  const start=async()=>{
+    await loadCountriesIndex(); await loadAll(); S.showFull=false;
+    document.getElementById('inputSection')?.classList.remove('hidden');
+    lockSelectors(true);
+    const legacy = document.getElementById('exportBtn'); if(legacy){ legacy.style.display='none'; legacy.id='exportBtnOld'; }
+  };
+
   const generate=()=>{
     const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
-    const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
-    const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
-    if(!nA.trim()||!nB.trim()) return warn(LANG()==='en'?'Enter valid names (A–Z, spaces)':'वैध नाम लिखें (A–Z, space)');
+    const mA=digits(qs('#mobileA')?.value||'');
+    const mB=digits(qs('#mobileB')?.value||'');
+    if(!nA.trim()||!nB.trim()) return warn(S.lang==='en'?'Enter valid names (A–Z, spaces)':'वैध नाम लिखें (A–Z, space)');
     const min=S.country?.mobile?.minLen||10, max=S.country?.mobile?.maxLen||10;
-    if(!(mA.length>=min && mA.length<=max) || !(mB.length>=min && mB.length<=max)) return warn(LANG()==='en'?'Invalid mobile number for selected country':'चयनित देश के अनुसार मोबाइल अमान्य');
-    if(mA===mB) return warn(LANG()==='en'?'Both mobiles cannot be the same.':'दोनों मोबाइल एक समान नहीं हो सकते।');
-    warn(''); const calc=calcPair({nameA:nA,nameB:nB,mA,mB}); S.showFull=false; render(calc,S.advice,S.showFull); setStage(2);
-    lockInputs(true); // session close
+    if(!(mA.length>=min && mA.length<=max) || !(mB.length>=min && mB.length<=max)) return warn(S.lang==='en'?'Invalid mobile number for selected country':'चयनित देश के अनुसार मोबाइल अमान्य');
+    if(mA===mB) return warn(S.lang==='en'?'Both mobiles cannot be the same.':'दोनों मोबाइल एक समान नहीं हो सकते।');
+    warn('');
+    const calc=calcPair({nameA:nA,nameB:nB,mA,mB}); S.showFull=false; render(calc,S.advice,S.showFull);
+    document.getElementById('inputSection')?.classList.remove('hidden');
+    lockInputs(true);
   };
-  const restart=()=>{ setStage(0); lockSelectors(false); lockInputs(false); ['#nameA','#nameB','#mobileA','#mobileB'].forEach(i=>{const e=qs(i); if(e) e.value='';}); qs('#reportContainer')&&(qs('#reportContainer').innerHTML=''); warn(''); };
+
+  const restart=()=>{
+    S.showFull=false; S.stage=0;
+    lockSelectors(false); lockInputs(false);
+    ['#nameA','#nameB','#mobileA','#mobileB'].forEach(i=>{const e=qs(i); if(e) e.value='';});
+    const cont=qs('#reportContainer'); if(cont) cont.innerHTML='';
+    warn('');
+  };
 
   document.addEventListener('click',(e)=>{
     if(e.target && e.target.id==='bigBtn'){
       S.showFull=true;
       const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
-      const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
-      const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
+      const mA=digits(qs('#mobileA')?.value||''), mB=digits(qs('#mobileB')?.value||'');
       const calc=calcPair({nameA:nA,nameB:nB,mA,mB});
       render(calc,S.advice,true);
       const pdfBtn=document.getElementById('exportBtn'); if(pdfBtn){ pdfBtn.addEventListener('click', exportPDF); }
