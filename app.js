@@ -1,9 +1,10 @@
-/* Mobile Sangam — app.js (Vector PDF + Hindi Font Hook + Fix PDF click)
-   - jsPDF vector PDF export (text selectable)
-   - Simple filename: SM<MA>-<MB>.pdf
-   - PDF button only after "Show Big Result"
-   - Session lock after Generate; score cap 88; derivations shown
-   - Hindi font hook: loads fonts/noto-devanagari.js if present; embeds into jsPDF if available
+/* Mobile Sangam — Dual-Lang Final (Local jsPDF Fallback + Calc Help + Restart UX)
+- Dual languages (en + hi) via /config/languages/*.json
+- Local jsPDF fallback: tries /lib/jspdf.umd.min.js, else CDN
+- Vector PDF, filename SM<MA>-<MB>.pdf
+- Restart only in Input section; hidden before Start
+- Big Result shows PDF button + Calculations with definitions + derivations
+- Score cap: 88
 */
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
@@ -21,6 +22,7 @@ const MS = (()=>{
 
   const S={lang:'en', relation:'HUSBAND_WIFE', iso2:'IN', ui:null, country:null, advice:null, stage:0, cIndex:[], showFull:false};
 
+  const showRestart=(show)=>{ const r=qs('#restartBtn'); if(r){ r.classList.toggle('hidden', !show); } };
   const lockSelectors=(lock)=>{ ['langSelect','relationSelect','countrySelect'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!!lock; }); };
   const lockInputs=(lock)=>{ ['nameA','nameB','mobileA','mobileB','generateBtn'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; if(id==='generateBtn'){ el.disabled=!!lock; el.classList.toggle('opacity-60', !!lock); el.classList.toggle('pointer-events-none', !!lock);} else { el.readOnly=!!lock; el.disabled=!!lock; el.classList.toggle('bg-gray-200', !!lock);} }); };
 
@@ -58,6 +60,8 @@ const MS = (()=>{
 
   const bindUI=()=>{
     const ui=S.ui||{};
+    qs('#uiAppTitle')&&(qs('#uiAppTitle').textContent=(ui.headings?.appTitle||'Mobile Sangam'));
+    qs('#uiSubtitle')&&(qs('#uiSubtitle').textContent=(S.ui?.titles?.subTitle||'Mobank • Yogank • Sanyuktank'));
     const relSel=document.getElementById('relationSelect');
     if(relSel && (ui.relations||ui.ui?.relations)){
       const relMap=ui.relations||ui.ui?.relations||{}; const cur=relSel.value||S.relation;
@@ -102,6 +106,23 @@ const MS = (()=>{
 
   const ring=(score)=>{ const pct=clamp(score,0,100); const ang=(pct/100)*180, r=64,cx=80,cy=80; const ex=cx+r*Math.cos(Math.PI-(ang*Math.PI/180)); const ey=cy-r*Math.sin(Math.PI-(ang*Math.PI/180)); return `<svg width="160" height="100" viewBox="0 0 160 100"><path d="M ${cx-r} ${cy} A ${r} ${r} 0 1 1 ${cx+r} ${cy}" fill="none" stroke-width="10" stroke="#eee"></path><path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${ex} ${ey}" fill="none" stroke-width="10" stroke="#3b82f6" stroke-linecap="round"></path><text x="80" y="70" text-anchor="middle" font-size="20" font-weight="700">${pct}</text></svg>`; };
 
+  const helpLines=(lang)=>{
+    if(lang==='hi'){
+      return [
+        '<strong>• मोबांक</strong> = मोबाइल नंबर का आख़िरी non‑zero अंक (0 मान्य नहीं).',
+        '<strong>• योगांक</strong> = मोबाइल के सभी अंकों का योग → 1–9 में संक्षेप.',
+        '<strong>• नामांक</strong> = नाम (A–Z) के 1–9 चक्र का योग → 1–9 में संक्षेप.',
+        '<strong>• संयुक्‍तांक</strong> = मोबांक और योगांक का <u>संगलन</u> (जोड़ नहीं; जैसे 5 व 3 ⇒ 53).'
+      ];
+    }
+    return [
+      '<strong>• Mobank</strong> = last non‑zero digit of the mobile (0 ignored).',
+      '<strong>• Yogank</strong> = sum of all digits → reduced to 1–9.',
+      '<strong>• Naamank</strong> = letter values (A–Z cycle 1–9) → reduced to 1–9.',
+      '<strong>• Sanyuktank</strong> = <u>concatenation</u> of Mobank & Yogank (not addition; e.g., 5 & 3 ⇒ 53).'
+    ];
+  };
+
   const derivationBlock=(label, name, mobile)=>{
     const letters = onlyAZSpace(name).replace(/\s+/g,'').split('');
     const nums    = letters.map(mapLetterVal);
@@ -127,32 +148,29 @@ const MS = (()=>{
     const nameB=(qs('#nameB')?.value||'B').trim().toUpperCase();
     const mobA=(qs('#mobileA')?.value||'').trim();
     const mobB=(qs('#mobileB')?.value||'').trim();
+    const lines = helpLines(S.lang).map(t=>`<div class="text-xs">${t}</div>`).join('');
     return `<div class="p-3 rounded border mt-3">
-      <div class="font-semibold mb-2">Calculations</div>
+      <div class="font-semibold mb-2">${S.lang==='hi'?'गणनाएँ':'Calculations'}</div>
+      <div class="mb-2 pl-1 space-y-0.5">${lines}</div>
       <div class="grid md:grid-cols-2 gap-3">
-        ${derivationBlock('Person A', nameA, mobA)}
-        ${derivationBlock('Person B', nameB, mobB)}
+        ${derivationBlock(S.lang==='hi'?'व्यक्ति A':'Person A', nameA, mobA)}
+        ${derivationBlock(S.lang==='hi'?'व्यक्ति B':'Person B', nameB, mobB)}
       </div>
       <div class="mt-3 grid md:grid-cols-2 gap-3">
         <div class="rounded p-2 border">
-          <div class="font-semibold mb-1">Computed (A)</div>
+          <div class="font-semibold mb-1">${S.lang==='hi'?'परिणाम (A)':'Computed (A)'}</div>
           <div>Mobank: <strong>${c.A.mobank}</strong></div>
           <div>Yogank: <strong>${c.A.yogank}</strong></div>
           <div>Naamank: <strong>${c.A.naamank}</strong></div>
           <div>Sanyuktank: <strong>${c.sanyuktankA}</strong></div>
         </div>
         <div class="rounded p-2 border">
-          <div class="font-semibold mb-1">Computed (B)</div>
+          <div class="font-semibold mb-1">${S.lang==='hi'?'परिणाम (B)':'Computed (B)'}</div>
           <div>Mobank: <strong>${c.B.mobank}</strong></div>
           <div>Yogank: <strong>${c.B.yogank}</strong></div>
           <div>Naamank: <strong>${c.B.naamank}</strong></div>
           <div>Sanyuktank: <strong>${c.sanyuktankB}</strong></div>
         </div>
-      </div>
-      <div class="mt-2">
-        <div class="font-semibold mb-1">Differences</div>
-        <div>Naamank Diff: <strong>${c.naamankDiff}</strong></div>
-        <div>Yogank Diff: <strong>${c.yogankDiff}</strong></div>
       </div>
     </div>`;
   };
@@ -161,11 +179,11 @@ const MS = (()=>{
     const el=qs('#reportContainer'); if(!el) return;
     const bigBlock = showFull ? `
       <div class="p-3 rounded border mb-3">
-        <div class="font-semibold mb-2">${S.lang==='en'?'Big Advice':'विस्तृत सलाह'}</div>
+        <div class="font-semibold mb-2">${S.lang==='hi'?'विस्तृत सलाह':'Big Advice'}</div>
         <div>${adv.big||''}</div>
       </div>
       <div class="p-3 rounded border mb-3">
-        <div class="font-semibold mb-2">${S.lang==='en'?'Remedies':'उपाय'}</div>
+        <div class="font-semibold mb-2">${S.lang==='hi'?'उपाय':'Remedies'}</div>
         <div>${adv.remedy||''}</div>
       </div>
       ${calcTable(calc)}
@@ -176,30 +194,30 @@ const MS = (()=>{
       </div>`
       : `<div class="text-center mt-3">
           <button id="bigBtn" class="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
-            ${(S.ui&&S.ui.buttons&&S.ui.buttons.showBig) || 'Show Big Result'}
+            ${(S.ui&&S.ui.buttons&&S.ui.buttons.showBig) || (S.lang==='hi'?'बड़ा परिणाम दिखाएँ':'Show Big Result')}
           </button>
         </div>`;
 
     el.innerHTML=`<div class="ms-report p-4 rounded-xl shadow bg-white text-black">
       <div class="grid md:grid-cols-2 gap-4 my-2">
         <div class="p-3 rounded border">
-          <div class="font-semibold mb-1">${S.lang==='en'?'Person A':'व्यक्ति A'}</div>
+          <div class="font-semibold mb-1">${S.lang==='hi'?'व्यक्ति A':'Person A'}</div>
           <div>Mobank: <strong>${calc.A.mobank}</strong></div>
           <div>Yogank: <strong>${calc.A.yogank}</strong></div>
           <div>Naamank: <strong>${calc.A.naamank}</strong></div>
           <div>Sanyuktank: <strong>${calc.sanyuktankA}</strong></div>
         </div>
         <div class="p-3 rounded border">
-          <div class="font-semibold mb-1">${S.lang==='en'?'Person B':'व्यक्ति B'}</div>
+          <div class="font-semibold mb-1">${S.lang==='hi'?'व्यक्ति B':'Person B'}</div>
           <div>Mobank: <strong>${calc.B.mobank}</strong></div>
           <div>Yogank: <strong>${calc.B.yogank}</strong></div>
           <div>Naamank: <strong>${calc.B.naamank}</strong></div>
           <div>Sanyuktank: <strong>${calc.sanyuktankB}</strong></div>
         </div>
       </div>
-      <div class="my-3 flex flex-col items-center">${ring(calc.harmonyScore)}<div class="text-center text-sm mt-1">${S.lang==='en'?'Harmony Score':'हार्मनी स्कोर'}</div></div>
+      <div class="my-3 flex flex-col items-center">${ring(calc.harmonyScore)}<div class="text-center text-sm mt-1">${S.lang==='hi'?'हार्मनी स्कोर':'Harmony Score'}</div></div>
       <div class="p-3 rounded border mb-3">
-        <div class="font-semibold mb-2">${S.lang==='en'?'Small Advice':'सार सलाह'}</div>
+        <div class="font-semibold mb-2">${S.lang==='hi'?'सार सलाह':'Small Advice'}</div>
         <div>${adv.small||''}</div>
       </div>
       ${bigBlock}
@@ -207,26 +225,28 @@ const MS = (()=>{
     </div>`;
   };
 
-  // ------- jsPDF loader (dynamic) and Hindi font hook -------
+  // ------- jsPDF loader (local first, then CDN) + Hindi font hook -------
   const ensureJsPDF = async()=>{
     if (window.jspdf || window.jsPDF) return;
-    await new Promise((resolve, reject)=>{
-      const s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
-      s.async=true;
-      s.onload=()=>resolve();
-      s.onerror=()=>reject(new Error('Failed to load jsPDF'));
-      document.head.appendChild(s);
-    });
+    async function load(src){
+      await new Promise((resolve, reject)=>{
+        const s=document.createElement('script');
+        s.src=src; s.async=true;
+        s.onload=()=>resolve();
+        s.onerror=()=>reject(new Error('Failed: '+src));
+        document.head.appendChild(s);
+      });
+    }
+    try{ await load('/lib/jspdf.umd.min.js'); }
+    catch(e){ await load('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'); }
   };
   const ensureNotoFont = async()=>{
     if (window.NotoDevaBase64) return true;
-    // try to load local font stub
     try{
-      await new Promise((resolve,reject)=>{
+      await new Promise((resolve)=>{
         const s=document.createElement('script');
         s.src='fonts/noto-devanagari.js';
-        s.async=true; s.onload=()=>resolve(); s.onerror=()=>resolve(); // non-blocking
+        s.async=true; s.onload=()=>resolve(); s.onerror=()=>resolve();
         document.head.appendChild(s);
       });
     }catch(_){}
@@ -235,8 +255,8 @@ const MS = (()=>{
 
   const exportPDF=async()=>{
     const node = qs('.ms-report');
-    if(!node){ alert(S.lang==='en'?'Please generate the report first.':'पहले रिपोर्ट जनरेट करें।'); return; }
-    await ensureJsPDF();
+    if(!node){ alert(S.lang==='hi'?'पहले रिपोर्ट जनरेट करें।':'Please generate the report first.'); return; }
+    try{ await ensureJsPDF(); }catch(e){ alert(e.message); return; }
     const { jsPDF } = window.jspdf || {};
     if(!jsPDF){ alert('PDF engine failed to load.'); return; }
     const useFont = await ensureNotoFont();
@@ -248,13 +268,12 @@ const MS = (()=>{
     const fname=`SM${MA}-${MB}.pdf`;
 
     const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
-
     if (useFont && window.NotoDevaBase64){
       try{
         doc.addFileToVFS("NotoSansDevanagari-Regular.ttf", window.NotoDevaBase64);
         doc.addFont("NotoSansDevanagari-Regular.ttf", "NotoDeva", "normal");
         doc.setFont("NotoDeva", "normal");
-      }catch(e){ console.warn('Font registration failed, proceeding with default.', e); }
+      }catch(e){ console.warn('Font registration failed; proceeding default.', e); }
     }
 
     await doc.html(node, {
@@ -269,18 +288,17 @@ const MS = (()=>{
     await loadCountriesIndex(); await loadAll(); S.showFull=false;
     document.getElementById('inputSection')?.classList.remove('hidden');
     lockSelectors(true);
-    // Hide any legacy export button (if present in index)
-    const legacy = document.getElementById('exportBtn'); if(legacy){ legacy.style.display='none'; legacy.id='exportBtnOld'; }
+    showRestart(true);
   };
 
   const generate=()=>{
     const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
     const mA=digits(qs('#mobileA')?.value||'');
     const mB=digits(qs('#mobileB')?.value||'');
-    if(!nA.trim()||!nB.trim()) return warn(S.lang==='en'?'Enter valid names (A–Z, spaces)':'वैध नाम लिखें (A–Z, space)');
+    if(!nA.trim()||!nB.trim()) return warn(S.lang==='hi'?'वैध नाम लिखें (A–Z, space)':'Enter valid names (A–Z, spaces)');
     const min=S.country?.mobile?.minLen||10, max=S.country?.mobile?.maxLen||10;
-    if(!(mA.length>=min && mA.length<=max) || !(mB.length>=min && mB.length<=max)) return warn(S.lang==='en'?'Invalid mobile number for selected country':'चयनित देश के अनुसार मोबाइल अमान्य');
-    if(mA===mB) return warn(S.lang==='en'?'Both mobiles cannot be the same.':'दोनों मोबाइल एक समान नहीं हो सकते।');
+    if(!(mA.length>=min && mA.length<=max) || !(mB.length>=min && mB.length<=max)) return warn(S.lang==='hi'?'चयनित देश के अनुसार मोबाइल अमान्य':'Invalid mobile number for selected country');
+    if(mA===mB) return warn(S.lang==='hi'?'दोनों मोबाइल एक समान नहीं हो सकते।':'Both mobiles cannot be the same.');
     warn('');
     const calc=calcPair({nameA:nA,nameB:nB,mA,mB}); S.showFull=false; render(calc,S.advice,S.showFull);
     document.getElementById('inputSection')?.classList.remove('hidden');
@@ -290,14 +308,16 @@ const MS = (()=>{
   const restart=()=>{
     S.showFull=false; S.stage=0;
     lockSelectors(false); lockInputs(false);
+    showRestart(false);
     ['#nameA','#nameB','#mobileA','#mobileB'].forEach(i=>{const e=qs(i); if(e) e.value='';});
     const cont=qs('#reportContainer'); if(cont) cont.innerHTML='';
+    const legacy = document.getElementById('exportBtn'); if(legacy){ legacy.style.display='none'; }
     warn('');
   };
 
-  // Robust delegated listeners (works even after re-render)
   document.addEventListener('click',(e)=>{
-    const id = (e.target && e.target.id) || (e.target.closest && e.target.closest('button') && e.target.closest('button').id);
+    const btn = e.target.closest && e.target.closest('button');
+    const id = btn && btn.id;
     if(id==='bigBtn'){
       S.showFull=true;
       const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
@@ -305,9 +325,7 @@ const MS = (()=>{
       const calc=calcPair({nameA:nA,nameB:nB,mA,mB});
       render(calc,S.advice,true);
     }
-    if(id==='exportBtn'){
-      exportPDF();
-    }
+    if(id==='exportBtn'){ exportPDF(); }
   });
 
   const loadCountriesIndex=async()=>{
@@ -322,6 +340,7 @@ const MS = (()=>{
     await loadAll();
     bindNameGuards();
     bindMobileGuards();
+    showRestart(false);
     on(qs('#startBtn'),'click',start);
     on(qs('#generateBtn'),'click',generate);
     on(qs('#restartBtn'),'click',restart);

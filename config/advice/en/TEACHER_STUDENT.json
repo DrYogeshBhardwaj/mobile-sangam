@@ -1,26 +1,5 @@
 {
-  "meta": {
-    "relation": "TEACHER_STUDENT",
-    "lang": "en"
-  },
-  "maps": {
-    "RULES": [],
-    "SANYUKTANK_BUCKETS": {}
-  },
-  "small": "Balanced outlook for Teacher\u2013Student. Keep communication clear and gentle.",
-  "big": "For Teacher\u2013Student, harmony improves when time, respect, and shared routines are maintained. Be practical with decisions and patient with emotions.",
-  "remedy": "Once a week, spend 20 minutes together in quiet reflection or prayer. Keep a shared note of gratitude.",
-  "details": {
-    "summary": "Teacher\u2013Student thrives on trust, clarity, and consistent effort.",
-    "strengths": [
-      "Trust",
-      "Communication",
-      "Commitment"
-    ],
-    "challenges": [
-      "Different priorities",
-      "Overthinking"
-    ],
-    "sinaankInsight": "When Mobank and Yogank align numerically, synergy increases and conflicts reduce."
-  }
+  "small": "Balanced outlook — keep communicating.",
+  "big": "Differences are natural; patience and clarity help build harmony.",
+  "remedy": "Meditate together once a week for 15 minutes."
 }

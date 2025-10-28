@@ -1,10 +1,9 @@
 {
   "ui": {
     "languageTitle": "English",
-    "belowLang": "Please select relation",
+    "belowLang": "Please choose relation",
     "headings": {
-      "appTitle": "Mobile Sangam",
-      "footer": "Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally."
+      "appTitle": "Mobile Sangam"
     },
     "buttons": {
       "start": "Start",
@@ -14,7 +13,7 @@
       "downloadPdf": "Download PDF"
     },
     "warnings": {
-      "nameScript": "Enter valid names (A–Z, spaces)",
+      "nameScript": "Enter valid names (A–Z, space)",
       "mobileFormat": "Invalid mobile number for selected country",
       "sameMobile": "Both mobiles cannot be the same."
     },
@@ -31,16 +30,11 @@
       "naamank": "Naamank",
       "sanyuktank": "Sanyuktank",
       "diffs": "Differences",
-      "naamankDiff": "Naamank Difference",
-      "yogankDiff": "Yogank Difference",
-      "appendix": "Technical Appendix"
+      "naamankDiff": "Naamank Diff",
+      "yogankDiff": "Yogank Diff"
     },
     "appendixTexts": [
-      "Each Mobank (last non-zero digit) reflects a primary action-current; Yogank (digit sum) shows cumulative intent.",
-      "Harmony below 50 suggests communication imbalance; focus on clarity and shared routines.",
-      "Sanyuktank is the concatenation of Mobank and Yogank (not arithmetic sum).",
-      "Naamank derives from A–Z letters mapped cyclically 1–9; spaces are neutral (0).",
-      "Detailed, personalized insights are available in the Sinaank Diamond Report."
+      "Mobank: last non-zero digit; Yogank: digit-sum reduced to 1–9; Sanyuktank: concatenation (not addition)."
     ]
   },
   "relations": {

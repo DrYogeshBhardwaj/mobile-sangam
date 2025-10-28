@@ -1,6 +1,5 @@
 {
-  "country": "India",
-  "iso2": "IN",
+  "name": "India",
   "isd": "+91",
   "mobile": {
     "minLen": 10,
@@ -8,13 +7,9 @@
     "strip": [
       " ",
       "-",
+      "+",
       "(",
-      ")",
-      "+"
+      ")"
     ]
-  },
-  "examples": [
-    "9876543210"
-  ],
-  "notes": "Lengths are national significant numbers (without ISD). Trailing zeros ignored for Mobank rule."
+  }
 }

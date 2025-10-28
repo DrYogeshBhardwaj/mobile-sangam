@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-b from-blue-900 to-black text-white min-h-screen flex flex-col items-center">
-  <!-- Header -->
   <header class="w-full text-center py-6 bg-blue-800 shadow-lg">
     <div class="flex flex-col items-center">
       <img src="assets/logo.png" alt="Mobile Sangam Logo" class="w-16 h-16 mb-2">
@@ -16,24 +15,20 @@
     </div>
   </header>
 
-  <!-- Language + Relation + Country Selection -->
   <section class="w-full max-w-xl bg-black/60 mt-8 p-6 rounded-xl shadow-xl">
     <h2 class="text-lg font-semibold mb-4 flex items-center justify-center gap-2">🌐
       <span id="langHead">Select Language, Relation & Country</span></h2>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <!-- Language -->
       <select id="langSelect" class="w-full p-2 rounded bg-sky-600 text-black font-semibold">
         <option value="en">English</option>
         <option value="hi">हिंदी</option>
       </select>
 
-      <!-- Relation (options auto-filled by JS) -->
       <select id="relationSelect" class="w-full p-2 rounded bg-sky-600 text-black font-semibold">
         <option value="">-- Select Relation --</option>
       </select>
 
-      <!-- Country -->
       <select id="countrySelect" class="w-full p-2 rounded bg-sky-600 text-black font-semibold">
         <option value="IN">India (+91)</option>
         <option value="US">USA (+1)</option>
@@ -42,14 +37,12 @@
 
     <div class="flex justify-between mt-4">
       <button id="startBtn" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-2 rounded-lg shadow">Start</button>
-      <button id="restartBtn" class="bg-gray-500 hover:bg-gray-400 text-black font-bold px-4 py-2 rounded-lg shadow">Restart</button>
+      <button id="restartBtn" class="bg-gray-500 hover:bg-gray-400 text-black font-bold px-4 py-2 rounded-lg shadow hidden">Restart</button>
     </div>
   </section>
 
-  <!-- Input Form -->
   <section class="w-full max-w-xl bg-black/60 mt-6 p-6 rounded-xl shadow-xl hidden" id="inputSection">
     <h2 class="text-lg font-semibold mb-4 text-center">🔢 Enter Names & Mobile Numbers</h2>
-
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block mb-1">Person A Name</label>
@@ -74,26 +67,18 @@
         </div>
       </div>
     </div>
-
     <div id="warnings" class="text-red-400 font-semibold mt-3 hidden"></div>
-
-    <div class="text-center mt-6 flex items-center justify-center gap-3 flex-wrap">
+    <div class="text-center mt-6">
       <button id="generateBtn" class="bg-green-500 hover:bg-green-400 text-black font-bold px-6 py-2 rounded-lg shadow">Generate Report</button>
-      <button id="exportBtn" class="bg-indigo-500 hover:bg-indigo-400 text-black font-bold px-6 py-2 rounded-lg shadow">Download PDF</button>
     </div>
   </section>
 
-  <!-- Report Output -->
   <section id="reportContainer" class="w-full max-w-2xl mt-6 p-4"></section>
 
-  <!-- Footer -->
   <footer class="mt-auto py-4 text-center text-xs opacity-80">
     Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally.
   </footer>
 
-  <!-- html2pdf for PDF export -->
-  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
-  <!-- App logic -->
   <script src="app.js"></script>
 </body>
 </html>
