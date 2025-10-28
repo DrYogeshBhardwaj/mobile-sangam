@@ -1,9 +1,8 @@
-/* Mobile Sangam — app.js (Session Lock + SM Filename + Classic Section + PDF fix)
-   Updates:
-   - After "Generate Report": disable name/mobile inputs and Generate button (session closed). Restart re-enables.
-   - PDF button remains only under Big Result.
-   - PDF export reliability improved; filename "SM<mA>-<mB>_...".
-   - Big Result includes a "Classic" block inspired by Sinaank Sahayog+ family report layout.
+/* Mobile Sangam — app.js (Hide legacy PDF btn + Derivation Blocks)
+   - Hides any old #exportBtn in index (so it never shows at start)
+   - PDF button appears ONLY after "Show Big Result"
+   - Adds derivations for Naamank and Yogank (letter/digit sums) per person
+   - Keeps: session lock, score cap 88, SM filename, staged flow
 */
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
@@ -14,23 +13,31 @@ const MS = (()=>{
   const onlyAZSpace=(s)=>(s||'').replace(/[^A-Za-z ]/g,'').toUpperCase();
   const clamp=(v,l,h)=>Math.max(l,Math.min(h,v));
   const reduce19=(n)=>{n=Math.abs(Number(n)||0);while(n>9)n=String(n).split('').reduce((a,d)=>a+Number(d),0);return n===0?9:n;};
-  const naamank=(name)=>{const c=onlyAZSpace(name); const mv=(ch)=> ch===' ' ? 0 : (((ch.charCodeAt(0)-64-1)%9)+1); return reduce19(c.split('').reduce((a,ch)=>a+mv(ch),0));};
-  const yogank=(d)=>reduce19((d||'').split('').reduce((a,x)=>a+Number(x),0));
+  const naamankVal=(name)=>{const c=onlyAZSpace(name); const mv=(ch)=> ch===' ' ? 0 : (((ch.charCodeAt(0)-64-1)%9)+1); return reduce19(c.split('').reduce((a,ch)=>a+mv(ch),0));};
+  const yogankVal=(d)=>reduce19((d||'').split('').reduce((a,x)=>a+Number(x),0));
   const lastNZ=(d)=>{for(let i=(d||'').length-1;i>=0;i--){if(d[i]!=='0')return Number(d[i]);}return 9;};
   const sanyukt=(m,y)=>Number(`${m}${y}`);
 
+  // Derivation helpers
+  const mapLetterVal=(ch)=> ch===' ' ? 0 : (((ch.charCodeAt(0)-64-1)%9)+1);
+  const naamankDerivation=(name)=>{
+    const clean=onlyAZSpace(name);
+    const letters = clean.replace(/\s+/g,'').split('');
+    const nums = letters.map(mapLetterVal);
+    const sum = nums.reduce((a,b)=>a+b,0);
+    const reduced = reduce19(sum);
+    return { letters, nums, sum, reduced };
+  };
+  const yogankDerivation=(d)=>{
+    const digs = (d||'').replace(/\D+/g,'').split('').map(x=>Number(x));
+    const sum = digs.reduce((a,b)=>a+b,0);
+    const reduced = reduce19(sum);
+    return { digs, sum, reduced };
+  };
+
   const S={lang:'en', relation:'HUSBAND_WIFE', iso2:'IN', ui:null, country:null, advice:null, stage:0, cIndex:[], showFull:false};
   const LANG=()=>S.lang||'en';
-  const T=(path, fallback)=>{
-    try{
-      const ui=S.ui||{};
-      const parts=path.split('.'); let cur=ui;
-      for(const k of parts){ cur = cur && cur[k]; }
-      return (cur==null?fallback:cur);
-    }catch(_){ return fallback; }
-  };
-  const FOOTER='Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally.';
-  const BTN=(k,f)=>T(`buttons.${k}`, f||k);
+  const BTN=(k,f)=>((S.ui&&S.ui.buttons&&S.ui.buttons[k])||f||k);
 
   const lockSelectors=(lock)=>{ ['langSelect','relationSelect','countrySelect'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!!lock; }); };
   const lockInputs=(lock)=>{ ['nameA','nameB','mobileA','mobileB','generateBtn'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; if(id==='generateBtn'){ el.disabled=!!lock; el.classList.toggle('opacity-60', !!lock); el.classList.toggle('pointer-events-none', !!lock);} else { el.readOnly=!!lock; el.disabled=!!lock; el.classList.toggle('bg-gray-200', !!lock);} }); };
@@ -67,7 +74,7 @@ const MS = (()=>{
   };
   const bindUI=()=>{
     const ui=S.ui||{};
-    qs('#uiAppTitle')&&(qs('#uiAppTitle').textContent=T('headings.appTitle','Mobile Sangam'));
+    qs('#uiAppTitle')&&(qs('#uiAppTitle').textContent=(ui.headings?.appTitle||'Mobile Sangam'));
     qs('#uiSubtitle')&&(qs('#uiSubtitle').textContent=(S.ui?.titles?.subTitle||'Mobank • Yogank • Sanyuktank'));
     const relSel=qs('#relationSelect');
     if(relSel && (ui.relations||ui.ui?.relations)){
@@ -102,8 +109,8 @@ const MS = (()=>{
   };
 
   const calcPair=({nameA,nameB,mA,mB})=>{
-    const A={ naamank:naamank(nameA), yogank:yogank(mA), mobank:lastNZ(mA) };
-    const B={ naamank:naamank(nameB), yogank:yogank(mB), mobank:lastNZ(mB) };
+    const A={ naamank:naamankVal(nameA), yogank:yogankVal(mA), mobank:lastNZ(mA) };
+    const B={ naamank:naamankVal(nameB), yogank:yogankVal(mB), mobank:lastNZ(mB) };
     let score=100; score-=Math.abs(A.naamank-B.naamank)*8; score-=Math.abs(A.yogank-B.yogank)*5;
     score = clamp(Math.round(score),0,88); // cap 88
     return {A,B, sanyuktankA:sanyukt(A.mobank,A.yogank), sanyuktankB:sanyukt(B.mobank,B.yogank), harmonyScore:score, naamankDiff:Math.abs(A.naamank-B.naamank), yogankDiff:Math.abs(A.yogank-B.yogank)};
@@ -111,19 +118,45 @@ const MS = (()=>{
 
   const ring=(score)=>{ const pct=clamp(score,0,100); const ang=(pct/100)*180, r=64,cx=80,cy=80; const ex=cx+r*Math.cos(Math.PI-(ang*Math.PI/180)); const ey=cy-r*Math.sin(Math.PI-(ang*Math.PI/180)); return `<svg width="160" height="100" viewBox="0 0 160 100"><path d="M ${cx-r} ${cy} A ${r} ${r} 0 1 1 ${cx+r} ${cy}" fill="none" stroke-width="10" stroke="#eee"></path><path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${ex} ${ey}" fill="none" stroke-width="10" stroke="#3b82f6" stroke-linecap="round"></path><text x="80" y="70" text-anchor="middle" font-size="20" font-weight="700">${pct}</text></svg>`; };
 
+  const eq=(arr, sep='+')=>arr.join(` ${sep} `);
+  const derivationBlock=(label, name, mobile)=>{
+    const nDer = naamankDerivation(name);
+    const yDer = yogankDerivation(mobile);
+    const letters = eq(nDer.letters, '+');
+    const nums    = eq(nDer.nums, '+');
+    const digs    = eq(yDer.digs, '+');
+    return `<div class="rounded p-3 bg-gray-50">
+      <div class="font-semibold mb-1">${label}</div>
+      <div class="text-sm"><em>${name}</em></div>
+      <div class="text-xs mt-1">• ${letters}</div>
+      <div class="text-xs">= ${nums} = <strong>${nDer.sum}</strong> ⇒ <strong>${nDer.reduced}</strong></div>
+      <div class="text-xs mt-2"><em>${mobile}</em></div>
+      <div class="text-xs">• ${digs}</div>
+      <div class="text-xs">= <strong>${yDer.sum}</strong> ⇒ <strong>${yDer.reduced}</strong></div>
+    </div>`;
+  };
+
   const calcTable=(c)=>{
+    const nameA=(qs('#nameA')?.value||'A').trim().toUpperCase();
+    const nameB=(qs('#nameB')?.value||'B').trim().toUpperCase();
+    const mobA=(qs('#mobileA')?.value||'').trim();
+    const mobB=(qs('#mobileB')?.value||'').trim();
     return `<div class="p-3 rounded border mt-3">
       <div class="font-semibold mb-2">Calculations</div>
       <div class="grid md:grid-cols-2 gap-3">
-        <div class="rounded p-2 bg-gray-50">
-          <div class="font-semibold mb-1">Person A</div>
+        ${derivationBlock('Person A', nameA, mobA)}
+        ${derivationBlock('Person B', nameB, mobB)}
+      </div>
+      <div class="mt-3 grid md:grid-cols-2 gap-3">
+        <div class="rounded p-2 border">
+          <div class="font-semibold mb-1">Computed (A)</div>
           <div>Mobank: <strong>${c.A.mobank}</strong></div>
           <div>Yogank: <strong>${c.A.yogank}</strong></div>
           <div>Naamank: <strong>${c.A.naamank}</strong></div>
           <div>Sanyuktank: <strong>${c.sanyuktankA}</strong></div>
         </div>
-        <div class="rounded p-2 bg-gray-50">
-          <div class="font-semibold mb-1">Person B</div>
+        <div class="rounded p-2 border">
+          <div class="font-semibold mb-1">Computed (B)</div>
           <div>Mobank: <strong>${c.B.mobank}</strong></div>
           <div>Yogank: <strong>${c.B.yogank}</strong></div>
           <div>Naamank: <strong>${c.B.naamank}</strong></div>
@@ -132,48 +165,14 @@ const MS = (()=>{
       </div>
       <div class="mt-2">
         <div class="font-semibold mb-1">Differences</div>
-        <div>Naamank Difference: <strong>${c.naamankDiff}</strong></div>
-        <div>Yogank Difference: <strong>${c.yogankDiff}</strong></div>
+        <div>Naamank Diff: <strong>${c.naamankDiff}</strong></div>
+        <div>Yogank Diff: <strong>${c.yogankDiff}</strong></div>
       </div>
-    </div>`;
-  };
-
-  const classicBlock=(calc)=>{
-    // Simple classic styled text block (can be localized later)
-    const relMap = S.ui?.relations || {};
-    const relText = relMap[S.relation] || S.relation;
-    const nameA=(qs('#nameA')?.value||'A').trim();
-    const nameB=(qs('#nameB')?.value||'B').trim();
-    const mobA=(qs('#mobileA')?.value||'').trim();
-    const mobB=(qs('#mobileB')?.value||'').trim();
-    return `<div class="p-3 rounded border mt-3">
-      <div class="font-semibold mb-2">SINAANK SAHAYOG+ FAMILY DIGITAL REPORT</div>
-      <div class="text-sm opacity-80">(${relText}: ${nameA} & ${nameB})</div>
-      <div class="mt-2 text-xs">🪔 Decode Your Destiny Digitally • Mobank • Yogank • Sanyuktank • Naamank • www.sinaank.com</div>
-      <hr class="my-3 border-dashed"/>
-      <div class="text-sm"><strong>1) Individual Digital Profile</strong></div>
-      <div class="mt-1">
-        <div class="mb-2"><strong>${nameA}</strong> (${mobA})<br/>
-          - Mobank: ${calc.A.mobank} &nbsp; - Yogank: ${calc.A.yogank} &nbsp; - Sanyuktank: ${calc.sanyuktankA} &nbsp; - Naamank: ${calc.A.naamank}
-        </div>
-        <div class="mb-2"><strong>${nameB}</strong> (${mobB})<br/>
-          - Mobank: ${calc.B.mobank} &nbsp; - Yogank: ${calc.B.yogank} &nbsp; - Sanyuktank: ${calc.sanyuktankB} &nbsp; - Naamank: ${calc.B.naamank}
-        </div>
-      </div>
-      <div class="mt-2 text-sm"><strong>2) Digital Harmony Summary</strong></div>
-      <div class="text-xs">Overall Harmony Score (capped): <strong>${calc.harmonyScore}%</strong></div>
     </div>`;
   };
 
   const render=(calc,adv,showFull)=>{
     const el=qs('#reportContainer'); if(!el) return;
-    const header = `<div class="mb-3 pb-3 border-b flex items-center gap-3">
-      <img src="assets/logo.png" alt="Logo" class="w-10 h-10"/>
-      <div>
-        <div class="text-xl font-bold">${S.ui?.headings?.appTitle || 'Mobile Sangam'}</div>
-        <div class="text-xs opacity-70">${S.ui?.titles?.subTitle || 'Mobank • Yogank • Sanyuktank'}</div>
-      </div>
-    </div>`;
 
     const bigBlock = showFull ? `
       <div class="p-3 rounded border mb-3">
@@ -185,7 +184,6 @@ const MS = (()=>{
         <div>${adv.remedy||''}</div>
       </div>
       ${calcTable(calc)}
-      ${classicBlock(calc)}
       <div class="text-center mt-4">
         <button id="exportBtn" class="bg-teal-500 hover:bg-teal-400 text-white font-semibold px-4 py-2 rounded-lg shadow">
           ${BTN('downloadPdf','Download PDF')}
@@ -197,17 +195,7 @@ const MS = (()=>{
           </button>
         </div>`;
 
-    const cta = `<div class="mt-4 text-center">
-      <a href="https://sinaank.com/dist/#/purchase?report=diamond" target="_blank"
-         class="inline-block bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-4 py-2 rounded-lg shadow">
-         Get Full Diamond Report (₹551)
-      </a>
-    </div>`;
-
-    const footer = `<div class="mt-6 pt-3 border-t text-center text-xs opacity-80">${FOOTER}</div>`;
-
     el.innerHTML=`<div class="ms-report p-4 rounded-xl shadow bg-white text-black">
-      ${header}
       <div class="grid md:grid-cols-2 gap-4 my-2">
         <div class="p-3 rounded border">
           <div class="font-semibold mb-1">${LANG()==='en'?'Person A':'व्यक्ति A'}</div>
@@ -230,8 +218,7 @@ const MS = (()=>{
         <div>${adv.small||''}</div>
       </div>
       ${bigBlock}
-      ${cta}
-      ${footer}
+      <div class="mt-6 pt-3 border-t text-center text-xs opacity-80">Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally.</div>
     </div>`;
   };
 
@@ -240,15 +227,11 @@ const MS = (()=>{
     if(!node){ alert(LANG()==='en'?'Please generate the report first.':'पहले रिपोर्ट जनरेट करें।'); return; }
     const nA=(qs('#nameA')?.value||'A').toUpperCase().replace(/[^A-Z ]/g,'').trim().replace(/\s+/g,'_');
     const nB=(qs('#nameB')?.value||'B').toUpperCase().replace(/[^A-Z ]/g,'').trim().replace(/\s+/g,'_');
-    const calcTxt = (()=>{
-      // build SM<MA>-<MB>
-      const mA = digits(qs('#mobileA')?.value||'');
-      const mB = digits(qs('#mobileB')?.value||'');
-      const MA = (mA && mA.length) ? (mA.replace(/0+$/,'').slice(-1)||'9') : '9';
-      const MB = (mB && mB.length) ? (mB.replace(/0+$/,'').slice(-1)||'9') : '9';
-      return `SM${MA}-${MB}`;
-    })();
-    const fname=`${calcTxt}_${S.relation||'REL'}_${nA}_x_${nB}_${S.iso2||'XX'}.pdf`;
+    const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
+    const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
+    const MA = (mA && mA.length) ? (mA.replace(/0+$/,'').slice(-1)||'9') : '9';
+    const MB = (mB && mB.length) ? (mB.replace(/0+$/,'').slice(-1)||'9') : '9';
+    const fname=`SM${MA}-${MB}_${S.relation||'REL'}_${nA}_x_${nB}_${S.iso2||'XX'}.pdf`;
     const opt={
       margin:[8,8,10,8],
       filename:fname,
@@ -260,27 +243,29 @@ const MS = (()=>{
     try{ await window.html2pdf().set(opt).from(node).save(); }catch(e){ console.error(e); alert('PDF export failed.'); }
   };
 
-  const start=async()=>{ await loadCountriesIndex(); await loadAll(); S.showFull=false; setStage(1); lockSelectors(true); };
+  const start=async()=>{ await loadCountriesIndex(); await loadAll(); S.showFull=false; setStage(1); lockSelectors(true);
+    // Hide any legacy export button placed in index.html accidentally
+    const legacy = qs('#exportBtn'); if(legacy){ legacy.style.display='none'; legacy.id='exportBtnOld'; }
+  };
   const generate=()=>{
     const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
-    const mA=digits(strip(qs('#mobileA')?.value||'', S.country?.mobile?.strip||[]));
-    const mB=digits(strip(qs('#mobileB')?.value||'', S.country?.mobile?.strip||[]));
+    const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
+    const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
     if(!nA.trim()||!nB.trim()) return warn(LANG()==='en'?'Enter valid names (A–Z, spaces)':'वैध नाम लिखें (A–Z, space)');
     const min=S.country?.mobile?.minLen||10, max=S.country?.mobile?.maxLen||10;
     if(!(mA.length>=min && mA.length<=max) || !(mB.length>=min && mB.length<=max)) return warn(LANG()==='en'?'Invalid mobile number for selected country':'चयनित देश के अनुसार मोबाइल अमान्य');
     if(mA===mB) return warn(LANG()==='en'?'Both mobiles cannot be the same.':'दोनों मोबाइल एक समान नहीं हो सकते।');
     warn(''); const calc=calcPair({nameA:nA,nameB:nB,mA,mB}); S.showFull=false; render(calc,S.advice,S.showFull); setStage(2);
-    // Session close: lock text inputs & generate
-    lockInputs(true);
+    lockInputs(true); // session close
   };
   const restart=()=>{ setStage(0); lockSelectors(false); lockInputs(false); ['#nameA','#nameB','#mobileA','#mobileB'].forEach(i=>{const e=qs(i); if(e) e.value='';}); qs('#reportContainer')&&(qs('#reportContainer').innerHTML=''); warn(''); };
 
-  // Delegated click listeners
   document.addEventListener('click',(e)=>{
     if(e.target && e.target.id==='bigBtn'){
       S.showFull=true;
       const nA=onlyAZSpace(qs('#nameA')?.value||''), nB=onlyAZSpace(qs('#nameB')?.value||'');
-      const mA=digits(qs('#mobileA')?.value||''), mB=digits(qs('#mobileB')?.value||'');
+      const mA=(qs('#mobileA')?.value||'').replace(/\D+/g,'');
+      const mB=(qs('#mobileB')?.value||'').replace(/\D+/g,'');
       const calc=calcPair({nameA:nA,nameB:nB,mA,mB});
       render(calc,S.advice,true);
       const pdfBtn=document.getElementById('exportBtn'); if(pdfBtn){ pdfBtn.addEventListener('click', exportPDF); }
