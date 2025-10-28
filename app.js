@@ -1,11 +1,4 @@
-/* Mobile Sangam — Dual-Lang Final (Local jsPDF Fallback + Calc Help + Restart UX)
-- Dual languages (en + hi) via /config/languages/*.json
-- Local jsPDF fallback: tries /lib/jspdf.umd.min.js, else CDN
-- Vector PDF, filename SM<MA>-<MB>.pdf
-- Restart only in Input section; hidden before Start
-- Big Result shows PDF button + Calculations with definitions + derivations
-- Score cap: 88
-*/
+/* Mobile Sangam — Dual-Lang (Fixed PDF Fallback) */
 const MS = (()=>{
   const qs=(s)=>document.querySelector(s);
   const on=(el,ev,fn)=>el&&el.addEventListener(ev,fn);
@@ -20,7 +13,7 @@ const MS = (()=>{
   const lastNZ=(d)=>{for(let i=(d||'').length-1;i>=0;i--){if(d[i]!=='0')return Number(d[i]);}return 9;};
   const sanyukt=(m,y)=>Number(`${m}${y}`);
 
-  const S={lang:'en', relation:'HUSBAND_WIFE', iso2:'IN', ui:null, country:null, advice:null, stage:0, cIndex:[], showFull:false};
+  const S={lang:'en', relation:'HUSBAND_WIFE', iso2:'IN', ui:null, country:null, advice:null, cIndex:[], showFull:false};
 
   const showRestart=(show)=>{ const r=qs('#restartBtn'); if(r){ r.classList.toggle('hidden', !show); } };
   const lockSelectors=(lock)=>{ ['langSelect','relationSelect','countrySelect'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!!lock; }); };
@@ -92,7 +85,6 @@ const MS = (()=>{
     if (adv && !adv.big && adv.details && adv.details.sinaankInsight) adv.big = adv.details.sinaankInsight;
     S.ui = ui?.ui ? { ...ui.ui, titles: ui.titles, relations: ui.relations||ui.ui?.relations } : ui;
     S.country=country; S.advice=adv;
-    localStorage.setItem('ms_last', JSON.stringify({lang,relation,iso2:S.iso2}));
     bindUI(); syncMobileAttrs();
   };
 
@@ -225,7 +217,7 @@ const MS = (()=>{
     </div>`;
   };
 
-  // ------- jsPDF loader (local first, then CDN) + Hindi font hook -------
+  // ------- jsPDF loader (fixed fallback) + Hindi font hook -------
   const ensureJsPDF = async()=>{
     if (window.jspdf || window.jsPDF) return;
     async function load(src){
@@ -237,8 +229,13 @@ const MS = (()=>{
         document.head.appendChild(s);
       });
     }
-    try{ await load('/lib/jspdf.umd.min.js'); }
-    catch(e){ await load('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'); }
+    // Try local
+    try{ await load('/lib/jspdf.umd.min.js'); }catch(e){ /* ignore */ }
+    // If local didn't attach window.jspdf, try CDN
+    if (!(window.jspdf || window.jsPDF)) {
+      await load('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+    }
+    if (!(window.jspdf || window.jsPDF)) throw new Error('jsPDF unavailable after local+CDN attempts');
   };
   const ensureNotoFont = async()=>{
     if (window.NotoDevaBase64) return true;
@@ -306,12 +303,11 @@ const MS = (()=>{
   };
 
   const restart=()=>{
-    S.showFull=false; S.stage=0;
+    S.showFull=false;
     lockSelectors(false); lockInputs(false);
     showRestart(false);
     ['#nameA','#nameB','#mobileA','#mobileB'].forEach(i=>{const e=qs(i); if(e) e.value='';});
     const cont=qs('#reportContainer'); if(cont) cont.innerHTML='';
-    const legacy = document.getElementById('exportBtn'); if(legacy){ legacy.style.display='none'; }
     warn('');
   };
 

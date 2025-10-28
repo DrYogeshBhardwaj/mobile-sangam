@@ -16,26 +16,7 @@
       "nameScript": "वैध नाम लिखें (A–Z, space)",
       "mobileFormat": "चयनित देश के अनुसार मोबाइल अमान्य",
       "sameMobile": "दोनों मोबाइल एक समान नहीं हो सकते।"
-    },
-    "labels": {
-      "smallAdvice": "सार सलाह",
-      "bigAdvice": "विस्तृत सलाह",
-      "remedies": "उपाय",
-      "harmonyScore": "हार्मनी स्कोर",
-      "calc": "गणनाएँ",
-      "personA": "व्यक्ति A",
-      "personB": "व्यक्ति B",
-      "mobank": "मोबांक",
-      "yogank": "योगांक",
-      "naamank": "नामांक",
-      "sanyuktank": "संयुक्‍तांक",
-      "diffs": "अंतर",
-      "naamankDiff": "नामांक अंतर",
-      "yogankDiff": "योगांक अंतर"
-    },
-    "appendixTexts": [
-      "मोबांक: मोबाइल का आख़िरी non-zero अंक; योगांक: अंकों का योग 1–9 में; संयुक्‍तांक: संगलन (जोड़ नहीं)।"
-    ]
+    }
   },
   "relations": {
     "HUSBAND_WIFE": "पति–पत्नी",

@@ -1,6 +1,4 @@
-
-// fonts/noto-devanagari.js
-// Replace window.NotoDevaBase64 with actual Base64 of NotoSansDevanagari-Regular.ttf
 (function(root){
-  root.NotoDevaBase64 = "UEhPTElOR0VSX0ZPTlRfREFUQQ=="; // placeholder
+  // Replace with real base64 of NotoSansDevanagari-Regular.ttf for perfect Hindi in PDF
+  root.NotoDevaBase64 = "UEhPTElOR0VSX0ZPTlRfREFUQQ==";
 })(typeof window!=='undefined' ? window : (typeof globalThis!=='undefined' ? globalThis : {}));

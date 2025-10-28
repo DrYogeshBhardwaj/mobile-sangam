@@ -16,26 +16,7 @@
       "nameScript": "Enter valid names (A–Z, space)",
       "mobileFormat": "Invalid mobile number for selected country",
       "sameMobile": "Both mobiles cannot be the same."
-    },
-    "labels": {
-      "smallAdvice": "Small Advice",
-      "bigAdvice": "Big Advice",
-      "remedies": "Remedies",
-      "harmonyScore": "Harmony Score",
-      "calc": "Calculations",
-      "personA": "Person A",
-      "personB": "Person B",
-      "mobank": "Mobank",
-      "yogank": "Yogank",
-      "naamank": "Naamank",
-      "sanyuktank": "Sanyuktank",
-      "diffs": "Differences",
-      "naamankDiff": "Naamank Diff",
-      "yogankDiff": "Yogank Diff"
-    },
-    "appendixTexts": [
-      "Mobank: last non-zero digit; Yogank: digit-sum reduced to 1–9; Sanyuktank: concatenation (not addition)."
-    ]
+    }
   },
   "relations": {
     "HUSBAND_WIFE": "Husband–Wife",
