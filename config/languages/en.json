@@ -7,8 +7,7 @@
       "start": "Start",
       "restart": "Restart",
       "generate": "Generate Report",
-      "showBig": "Show Big Result",
-      "downloadPdf": "Download PDF"
+      "showBig": "Show Big Result"
     },
     "warnings": {
       "nameScript": "Enter valid names (A–Z, space)",

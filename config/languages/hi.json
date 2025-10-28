@@ -7,8 +7,7 @@
       "start": "शुरू करें",
       "restart": "पुनः आरंभ",
       "generate": "रिपोर्ट बनाएं",
-      "showBig": "बड़ा परिणाम दिखाएँ",
-      "downloadPdf": "PDF डाउनलोड करें"
+      "showBig": "बड़ा परिणाम दिखाएँ"
     },
     "warnings": {
       "nameScript": "वैध नाम लिखें (A–Z, space)",
