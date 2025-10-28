@@ -1,0 +1,32 @@
+{
+  "ui": {
+    "languageTitle": "English",
+    "belowLang": "Please select relation",
+    "headings": {
+      "appTitle": "Mobile Sangam",
+      "footer": "Dr. Yogesh Bhardwaj — Astro Scientist • www.sinaank.com • Decode Your Destiny Digitally."
+    },
+    "buttons": {
+      "start": "Start",
+      "restart": "Restart",
+      "generate": "Generate Report"
+    },
+    "warnings": {
+      "nameScript": "Only A–Z letters are allowed.",
+      "mobileFormat": "Invalid mobile number for selected country."
+    }
+  },
+  "relations": {
+    "HUSBAND_WIFE": "Husband–Wife",
+    "FRIENDS": "Friends",
+    "BUSINESS_PARTNERS": "Business Partners",
+    "PARENTS_CHILD": "Parents–Child",
+    "BROTHER_SISTER": "Brother–Sister",
+    "GURU_SHISHYA": "Teacher–Disciple",
+    "NEIGHBOURS": "Neighbours"
+  },
+  "titles": {
+    "mainTitle": "Sinaank Digital Match System",
+    "subTitle": "Mobank • Yogank • Sanyuktank"
+  }
+}

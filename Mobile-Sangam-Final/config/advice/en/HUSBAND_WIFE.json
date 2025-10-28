@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "relation": "HUSBAND_WIFE",
+    "lang": "en"
+  },
+  "maps": {
+    "SANYUKTANK_BUCKETS": {
+      "11": "High Harmony",
+      "22": "Balanced",
+      "33": "Caution Zone"
+    },
+    "RULES": [
+      {
+        "when": {
+          "mobankPair": [
+            "1",
+            "4"
+          ]
+        },
+        "small": "Excellent understanding and long-term compatibility.",
+        "big": "Strong pair with patience and practical outlook. Keep emotions balanced.",
+        "remedy": "Light a lamp together every Friday evening."
+      }
+    ]
+  }
+}
+
+"details": {
+  "summary": "This relationship thrives on shared values and emotional understanding.",
+  "strengths": ["Mutual trust", "Balanced communication"],
+  "challenges": ["Occasional overthinking", "Need for shared downtime"],
+  "sinaankInsight": "When Mobank and Yogank align, emotional harmony deepens for long-term bonding."
+}
